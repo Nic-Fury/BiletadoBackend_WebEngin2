@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Biletado.Controllers;
 
-[]
+[ApiController]
+[Route("api/[controller]")]
 
 public class StatusController : Controller
 {
