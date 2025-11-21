@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
 namespace Biletado.Controllers;
-
+/*
 [ApiController]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
@@ -29,4 +29,4 @@ public class WeatherForecastController : ControllerBase
             })
             .ToArray();
     }
-}
+}*/
