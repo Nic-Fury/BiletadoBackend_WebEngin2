@@ -21,9 +21,22 @@ public class StatusController : Controller
     }
     
     [HttpGet("health")]
-    public async Task<IActionResult> GetLife()
+    public async Task<IActionResult> GetHealth()
+    {
+        return Ok();
+    }
+    
+    [HttpGet("health/live")]
+    public async Task<IActionResult> GetLive()
+    {
+        return Ok();
+    }
+    
+    [HttpGet("health/ready")]
+    public async Task<IActionResult> GetReady()
     {
         return Ok();
     }
     
 }
+
