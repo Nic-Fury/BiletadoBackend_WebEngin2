@@ -12,7 +12,12 @@ public class StatusController : Controller
     [HttpGet("status")]
     public async Task<IActionResult> GetAll()
     {
-        return Ok();
+        var result = new
+        {
+            authors = new[] { "Nic Nouisser & Jakob Kaufmann" },
+            api_version = "3.0.0" // TODO: Richtige Version einfügen
+        };
+        return Ok(result);
     }
     
     [HttpGet("health")]
