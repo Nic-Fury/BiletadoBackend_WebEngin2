@@ -15,7 +15,7 @@ public class StatusController : Controller
         return Ok();
     }
     
-    [HttpGet("status")]
+    [HttpGet("health")]
     public async Task<IActionResult> GetLife()
     {
         return Ok();
