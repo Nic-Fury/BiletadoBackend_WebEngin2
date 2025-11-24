@@ -9,8 +9,6 @@ namespace Biletado.Controllers;
 
 public class StatusController : Controller
 {
-    
-    
     [HttpGet("status")]
     public async Task<IActionResult> GetAll()
     {
@@ -34,12 +32,19 @@ public class StatusController : Controller
         return Ok(new{live = true});
     }
     
+    
+    private readonly ReservationStatusService _reservationStatusService;
+
+    public StatusController(ReservationStatusService reservationStatusService)
+    {
+        _reservationStatusService = reservationStatusService;
+    }
     [HttpGet("health/ready")]
     public async Task<IActionResult> GetReady()
     {
         var traceId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
-        var assetsConnected = await ReservationStatusService.IsAssetsServiceReadyAsync();
-        var reservationsConnected = await ReservationStatusService.IsReservationsDatabaseConnectedAsync();
+        var assetsConnected = await _reservationStatusService.IsAssetsServiceReadyAsync();
+        var reservationsConnected = await _reservationStatusService.IsReservationsDatabaseConnectedAsync();
         if (!assetsConnected)
         {
             return StatusCode(503, new
