@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Biletado.DTOs;
 using Biletado.Repository;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace Biletado.Services;
@@ -15,7 +16,7 @@ public interface IReservationStatusService
         DateOnly? after = null,
         CancellationToken ct = default);
 }
-public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository, IConfiguration config) : IReservationStatusService
+public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository,Contexts.ReservationsDbContext db, IConfiguration config) : IReservationStatusService
 {
     public async Task<bool> IsAssetsServiceReadyAsync(CancellationToken ct = default)
     {
