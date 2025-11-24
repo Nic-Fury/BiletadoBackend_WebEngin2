@@ -27,7 +27,7 @@ public class ReservationsController : Controller
         }
         
         
-        // Parse optional before date.
+        // optional before date parameter
         DateOnly? beforeDate = null;
         if (!string.IsNullOrWhiteSpace(before))
         {
@@ -37,10 +37,21 @@ public class ReservationsController : Controller
                 return BadRequest(ErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
             }
         }
-
-
         
+        // optional after date parameter
+        DateOnly? afterDate = null;
+        if (!string.IsNullOrWhiteSpace(after))
+        {
+            if (DateOnly.TryParse(after, out var a)) afterDate = a;
+            else
+            {
+                return BadRequest(ErrorResponse("bad_request", "Invalid after date (YYYY-MM-DD)."));
+            }
+        }
         
+        var data = await reservationService.GetAllReservationsAsync(includeDeleted, roomGuid, beforeDate, afterDate,ct);
+        
+        return Ok(new { reservations = data });
     }
 
     // POST
