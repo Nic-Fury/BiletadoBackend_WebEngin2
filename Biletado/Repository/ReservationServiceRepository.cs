@@ -1,6 +1,6 @@
 namespace Biletado.Repository;
 
-public class ReservationServiceRepository
+public class ReservationServiceRepository(ReservationsDbContext ctx)
 {
     public Task<List<Reservation>> GetAllAsync(bool includeDeleted = false, CancellationToken ct = default)
     {
