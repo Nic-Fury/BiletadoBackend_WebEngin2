@@ -1,4 +1,5 @@
-using Biletado.Services.ReservatonService;
+using Biletado.Services;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Biletado.Controllers;
@@ -37,8 +38,8 @@ public class StatusController : Controller
     public async Task<IActionResult> GetReady()
     {
         var traceId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
-        var assetsConnected = await reservationService.IsAssetsServiceReadyAsync();
-        var reservationsConnected = await reservationService.IsReservationsDatabaseConnectedAsync();
+        var assetsConnected = await ReservationStatusService.IsAssetsServiceReadyAsync();
+        var reservationsConnected = await ReservationStatusService.IsReservationsDatabaseConnectedAsync();
         if (!assetsConnected)
         {
             return StatusCode(503, new
