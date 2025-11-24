@@ -51,6 +51,23 @@ public class ReservationStatusService (ReservationServiceRepository ReservationS
         return false;
     }
     
+    public async Task<bool> IsReservationsDatabaseConnectedAsync(CancellationToken ct = default)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync("SELECT 1;", ct);
+            sw.Stop();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            return false;
+        }
+    }
+
+    
     public async Task<IReadOnlyCollection<ReservationResponse>> GetAllReservationsAsync(
         bool includeDeleted = false,
         Guid? roomId = null,
