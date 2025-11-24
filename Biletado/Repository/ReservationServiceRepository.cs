@@ -1,3 +1,7 @@
+using Biletado.Contexts;
+using Biletado.Domain;
+using Microsoft.EntityFrameworkCore;
+
 namespace Biletado.Repository;
 
 public class ReservationServiceRepository(ReservationsDbContext ctx)

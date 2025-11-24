@@ -1,4 +1,5 @@
 using Biletado.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Biletado.Contexts;
 
