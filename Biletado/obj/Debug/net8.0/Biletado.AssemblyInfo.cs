@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Biletado")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e521fdc211ed45ac52c927ace3092ce529c67421")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+564cf0dedef6043d5b150365309f875c6db8f523")]
 [assembly: System.Reflection.AssemblyProductAttribute("Biletado")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Biletado")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

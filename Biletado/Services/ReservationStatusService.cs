@@ -9,6 +9,7 @@ namespace Biletado.Services;
 public interface IReservationStatusService
 {
     Task<bool> IsAssetsServiceReadyAsync(CancellationToken ct = default);
+    Task<bool> IsReservationsDatabaseConnectedAsync(CancellationToken ct = default);
     Task<IReadOnlyCollection<ReservationResponse>> GetAllReservationsAsync(
         bool includeDeleted = false,
         Guid? roomId = null,
