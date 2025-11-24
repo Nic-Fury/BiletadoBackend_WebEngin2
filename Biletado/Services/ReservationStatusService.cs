@@ -4,7 +4,8 @@ using Biletado.Repository;
 
 namespace Biletado.Services;
 
-public class ReservationStatusService
+public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository,)
+    IConfiguration config) : IReservationStatusService
 {
     public async Task<bool> IsAssetsServiceReadyAsync(CancellationToken ct = default)
     {
