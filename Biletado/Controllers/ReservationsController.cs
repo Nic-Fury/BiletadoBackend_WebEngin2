@@ -22,9 +22,10 @@ public class ReservationsController : Controller
             if (Guid.TryParse(roomId, out var parsed)) roomGuid = parsed;
             else
             {
-                return BadRequest(BuildErrorResponse("bad_request", "Invalid room_id."));
+                return BadRequest(ErrorResponse("bad_request", "Invalid room_id."));
             }
         }
+        
         
         // Parse optional before date.
         DateOnly? beforeDate = null;
@@ -33,7 +34,7 @@ public class ReservationsController : Controller
             if (DateOnly.TryParse(before, out var b)) beforeDate = b;
             else
             {
-                return BadRequest(BuildErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
+                return BadRequest(ErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
             }
         }
 
@@ -68,6 +69,14 @@ public class ReservationsController : Controller
     public async Task<IActionResult> DeleteReservationByID()
     {
         return Ok();
+    }
+    
+    
+    
+    
+    private object ErrorResponse(string code, string message)
+    {
+        return new { error = new { code, message } };
     }
 
 }

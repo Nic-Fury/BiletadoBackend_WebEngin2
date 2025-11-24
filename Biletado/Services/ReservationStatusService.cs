@@ -1,6 +1,6 @@
 namespace Biletado.Services;
 
-public class ReservatonStatusService
+public class ReservationStatusService
 {
     
 }
