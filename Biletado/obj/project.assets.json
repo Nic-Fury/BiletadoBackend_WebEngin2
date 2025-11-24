@@ -2694,19 +2694,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\nicno\\.nuget\\packages\\": {}
+    "/Users/jakobkaufmann/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\Biletado.csproj",
+      "projectUniqueName": "/Users/jakobkaufmann/RiderProjects/BiletadoBackend_WebEngin2/Biletado/Biletado.csproj",
       "projectName": "Biletado",
-      "projectPath": "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\Biletado.csproj",
-      "packagesPath": "C:\\Users\\nicno\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\obj\\",
+      "projectPath": "/Users/jakobkaufmann/RiderProjects/BiletadoBackend_WebEngin2/Biletado/Biletado.csproj",
+      "packagesPath": "/Users/jakobkaufmann/.nuget/packages/",
+      "outputPath": "/Users/jakobkaufmann/RiderProjects/BiletadoBackend_WebEngin2/Biletado/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\nicno\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/Users/jakobkaufmann/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -2773,7 +2773,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Users\\nicno\\.dotnet\\sdk\\8.0.410/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/Users/jakobkaufmann/.dotnet/sdk/8.0.410/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
