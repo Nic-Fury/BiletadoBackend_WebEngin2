@@ -8,12 +8,40 @@ public class ReservationsController : Controller
 {
     // GET
     [HttpGet]
-    public async Task<IActionResult> GetAllReservations()
+    public async Task<IActionResult> GetAllReservations(
+            [FromQuery(Name = "include_deleted")] bool includeDeleted = false,
+            [FromQuery(Name = "room_id")] string? roomId = null,
+            [FromQuery] string? before = null,
+            [FromQuery] string? after = null,
+            CancellationToken ct = default)
     {
+        // optional room id parameter
+        Guid? roomGuid = null;
+        if (!string.IsNullOrWhiteSpace(roomId))
+        {
+            if (Guid.TryParse(roomId, out var parsed)) roomGuid = parsed;
+            else
+            {
+                return BadRequest(BuildErrorResponse("bad_request", "Invalid room_id."));
+            }
+        }
         
-        return Ok();
+        // Parse optional before date.
+        DateOnly? beforeDate = null;
+        if (!string.IsNullOrWhiteSpace(before))
+        {
+            if (DateOnly.TryParse(before, out var b)) beforeDate = b;
+            else
+            {
+                return BadRequest(BuildErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
+            }
+        }
+
+
+        
+        
     }
-    
+
     // POST
     [HttpPost]
     public async Task<IActionResult> PostAllReservations()
