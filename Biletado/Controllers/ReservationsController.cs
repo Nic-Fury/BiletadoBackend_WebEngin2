@@ -7,7 +7,13 @@ namespace Biletado.Controllers;
 [Route("api/v3/reservations/reservations")]
 public class ReservationsController : Controller
 {
-    // GET
+    private readonly IReservationStatusService _reservationStatusService;
+
+    public ReservationsController(IReservationStatusService reservationStatusService)
+    {
+        _reservationStatusService = reservationStatusService;
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAllReservations(
             [FromQuery(Name = "include_deleted")] bool includeDeleted = false,
@@ -16,7 +22,6 @@ public class ReservationsController : Controller
             [FromQuery] string? after = null,
             CancellationToken ct = default)
     {
-        // optional room id parameter
         Guid? roomGuid = null;
         if (!string.IsNullOrWhiteSpace(roomId))
         {
@@ -26,9 +31,7 @@ public class ReservationsController : Controller
                 return BadRequest(ErrorResponse("bad_request", "Invalid room_id."));
             }
         }
-        
-        
-        // optional before date parameter
+
         DateOnly? beforeDate = null;
         if (!string.IsNullOrWhiteSpace(before))
         {
@@ -38,8 +41,7 @@ public class ReservationsController : Controller
                 return BadRequest(ErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
             }
         }
-        
-        // optional after date parameter
+
         DateOnly? afterDate = null;
         if (!string.IsNullOrWhiteSpace(after))
         {
@@ -49,50 +51,38 @@ public class ReservationsController : Controller
                 return BadRequest(ErrorResponse("bad_request", "Invalid after date (YYYY-MM-DD)."));
             }
         }
-        
-        var data = await ReservationStatusService.GetAllReservationsAsync(includeDeleted, roomGuid, beforeDate, afterDate,ct);
-        
+
+        var data = await _reservationStatusService.GetAllReservationsAsync(includeDeleted, roomGuid, beforeDate, afterDate, ct);
+
         return Ok(new { reservations = data });
     }
 
-    // POST
     [HttpPost]
     public async Task<IActionResult> PostAllReservations()
     {
         return Ok();
     }
-    
-    // GET
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetReservationByID()
     {
         return Ok();
     }
-    
-    // PUT
+
     [HttpPut("{id}")]
     public async Task<IActionResult> PutReservationByID()
     {
         return Ok();
     }
-    
-    // DELETE
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteReservationByID()
     {
         return Ok();
     }
-    
-    
-    
-    
+
     private object ErrorResponse(string code, string message)
     {
         return new { error = new { code, message } };
     }
-
 }
-
-
-
-
