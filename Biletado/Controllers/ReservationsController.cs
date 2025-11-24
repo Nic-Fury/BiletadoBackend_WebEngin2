@@ -1,3 +1,4 @@
+using Biletado.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Biletado.Controllers;
@@ -49,7 +50,7 @@ public class ReservationsController : Controller
             }
         }
         
-        var data = await reservationService.GetAllReservationsAsync(includeDeleted, roomGuid, beforeDate, afterDate,ct);
+        var data = await ReservationStatusService.GetAllReservationsAsync(includeDeleted, roomGuid, beforeDate, afterDate,ct);
         
         return Ok(new { reservations = data });
     }

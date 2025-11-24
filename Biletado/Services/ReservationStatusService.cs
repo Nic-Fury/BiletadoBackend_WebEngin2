@@ -1,11 +1,21 @@
 using System.Text.Json;
+using Biletado.DTOs;
 using Biletado.Repository;
 
 
 namespace Biletado.Services;
 
-public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository,)
-    IConfiguration config) : IReservationStatusService
+public interface IReservationStatusService
+{
+    Task<bool> IsAssetsServiceReadyAsync(CancellationToken ct = default);
+    Task<IReadOnlyCollection<ReservationResponse>> GetAllReservationsAsync(
+        bool includeDeleted = false,
+        Guid? roomId = null,
+        DateOnly? before = null,
+        DateOnly? after = null,
+        CancellationToken ct = default);
+}
+public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository, IConfiguration config) : IReservationStatusService
 {
     public async Task<bool> IsAssetsServiceReadyAsync(CancellationToken ct = default)
     {
