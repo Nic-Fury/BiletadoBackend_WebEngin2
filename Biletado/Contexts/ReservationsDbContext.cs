@@ -2,12 +2,8 @@ namespace Biletado.Contexts;
 
 public class ReservationsDbContext(DbContextOptions<ReservationsDbContext> options) : DbContext(options)
 {
-    /// <summary>Reservations set.</summary>
     public DbSet<Reservation> Reservations => Set<Reservation>();
-
-    /// <summary>
-    /// Configures the reservation entity mapping including soft-delete filter and composite index.
-    /// </summary>
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
