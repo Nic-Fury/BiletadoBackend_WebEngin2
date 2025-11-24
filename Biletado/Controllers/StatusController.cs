@@ -1,3 +1,4 @@
+using Biletado.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Biletado.Controllers;
@@ -29,14 +30,48 @@ public class StatusController : Controller
     [HttpGet("health/live")]
     public async Task<IActionResult> GetLive()
     {
-        return Ok();
+        return Ok(new{live = true});
     }
     
     [HttpGet("health/ready")]
     public async Task<IActionResult> GetReady()
     {
-        return Ok();
+        var traceId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
+        var assetsConnected = await reservationService.IsAssetsServiceReadyAsync();
+        var reservationsConnected = await reservationService.IsReservationsDatabaseConnectedAsync();
+        if (!assetsConnected)
+        {
+            return StatusCode(503, new
+            {
+                errors = new[]
+                {
+                    new
+                    {
+                        code = "service_unreachable",
+                        message = "Assets service is not reachable.",
+                        more_info = "Check Assets service."
+                    }
+                },
+                trace = traceId
+            });
+        }
+        if (!reservationsConnected)
+        {
+            return StatusCode(503, new
+            {
+                errors = new[]
+                {
+                    new
+                    {
+                        code = "database_unreachable",
+                        message = "Reservation database is not reachable.",
+                        more_info = "Check connection string or database availability."
+                    }
+                },
+                trace = traceId
+            });
+        }
+        return Ok(new { ready = true });
     }
-    
 }
 
