@@ -1,6 +1,6 @@
 using Biletado.DTOs;
 
-namespace Api.Application.Services;
+namespace Biletado.Services;
 
 public interface IReservationService
 {
