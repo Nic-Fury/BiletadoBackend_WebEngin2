@@ -1,3 +1,5 @@
+using Biletado.Domain;
+
 namespace Biletado.Contexts;
 
 public class ReservationsDbContext(DbContextOptions<ReservationsDbContext> options) : DbContext(options)
