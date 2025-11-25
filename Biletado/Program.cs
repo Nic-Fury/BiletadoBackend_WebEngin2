@@ -31,6 +31,7 @@ public class Program
         // Register Repository and Services
         builder.Services.AddScoped<ReservationServiceRepository>();
         builder.Services.AddScoped<IReservationStatusService, ReservationStatusService>();
+        builder.Services.AddScoped<IReservationService, ReservationStatusService>();
         builder.Services.AddScoped<ReservationStatusService>();
         
         // Configure Swagger/OpenAPI
