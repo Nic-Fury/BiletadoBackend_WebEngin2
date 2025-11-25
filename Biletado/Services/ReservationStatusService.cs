@@ -90,6 +90,46 @@ public class ReservationStatusService (ReservationServiceRepository ReservationS
         
         return list.Select(r => new ReservationResponse(r.Id, r.From, r.To, r.RoomId, r.DeletedAt)).ToList();
     }
+    
+     public async Task<bool> IsRoomExistingAsync(Guid roomId, CancellationToken ct = default)
+    {
+        var baseUrl = config["Services:Assets:BaseUrl"];
+        var port = config["Services:Assets:Port"];
+        var url = $"{baseUrl}:{port}";
+        var roomPath = config["Services:Assets:RoomPath"];
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        
+        var relativePath = roomPath!.Replace("{id}", roomId.ToString());
+
+        using var client = new HttpClient();
+        client.BaseAddress = new Uri(url!);
+        try {
+            var response = await client.GetAsync(relativePath, ct);
+            sw.Stop();
+
+            if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                return response.StatusCode == System.Net.HttpStatusCode.OK;
+
+            var json = await response.Content.ReadAsStringAsync(ct);
+            try {
+                using var doc = JsonDocument.Parse(json);
+                if (!doc.RootElement.TryGetProperty("deleted_at", out var deletedAtProp)) return true;
+                if (deletedAtProp.ValueKind == JsonValueKind.Null) return true;
+                return false;
+            }
+            catch (JsonException jex) {
+              return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+           return false;
+        }
+    }
+
+
 
 
 }
