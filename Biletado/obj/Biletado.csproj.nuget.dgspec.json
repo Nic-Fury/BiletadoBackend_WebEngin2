@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\Biletado.csproj": {}
+    "/home/runner/work/BiletadoBackend_WebEngin2/BiletadoBackend_WebEngin2/Biletado/Biletado.csproj": {}
   },
   "projects": {
-    "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\Biletado.csproj": {
+    "/home/runner/work/BiletadoBackend_WebEngin2/BiletadoBackend_WebEngin2/Biletado/Biletado.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\Biletado.csproj",
+        "projectUniqueName": "/home/runner/work/BiletadoBackend_WebEngin2/BiletadoBackend_WebEngin2/Biletado/Biletado.csproj",
         "projectName": "Biletado",
-        "projectPath": "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\Biletado.csproj",
-        "packagesPath": "C:\\Users\\nicno\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\nicno\\RiderProjects\\BiletadoBackend_WebEngin2\\Biletado\\obj\\",
+        "projectPath": "/home/runner/work/BiletadoBackend_WebEngin2/BiletadoBackend_WebEngin2/Biletado/Biletado.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/BiletadoBackend_WebEngin2/BiletadoBackend_WebEngin2/Biletado/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\nicno\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/home/runner/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -37,7 +37,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -81,7 +82,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\nicno\\.dotnet\\sdk\\8.0.410/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
