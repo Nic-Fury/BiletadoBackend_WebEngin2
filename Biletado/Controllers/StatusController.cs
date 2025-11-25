@@ -6,32 +6,46 @@ namespace Biletado.Controllers;
 
 [ApiController]
 [Route("api/v3/reservations")]
-public class StatusController : Controller
+public class StatusController(IReservationStatusService reservationStatusService) : ControllerBase
 {
-    private readonly ReservationStatusService _reservationStatusService;
-
-    public StatusController(ReservationStatusService reservationStatusService)
-    {
-        _reservationStatusService = reservationStatusService;
-    }
-
     [HttpGet("status")]
-    public async Task<IActionResult> GetAll()
+    public IActionResult GetStatus()
     {
-        var result = new
+        return Ok(new
         {
             authors = new[] { "Nic Nouisser & Jakob Kaufmann" },
             api_version = "3.0.0"
-        };
-        return Ok(result);
+        });
     }
-    
+
     [HttpGet("health")]
-    public async Task<IActionResult> GetHealth()
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> GetHealth(CancellationToken ct = default)
     {
-        return Ok();
+        var assetsConnected = await reservationStatusService.IsAssetsServiceReadyAsync(ct);
+        var reservationsConnected = await reservationStatusService.IsReservationsDatabaseConnectedAsync(ct);
+
+        var isReady = assetsConnected && reservationsConnected;
+
+        var response = new
+        {
+            live = true,
+            ready = isReady,
+            databases = new
+            {
+                assets = new { connected = assetsConnected }
+            }
+        };
+
+        if (!isReady)
+        {
+            return StatusCode(503, response);
+        }
+
+        return Ok(response);
     }
-    
+
     [HttpGet("health/live")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetLive()
@@ -39,14 +53,15 @@ public class StatusController : Controller
         return Ok(new { live = true });
     }
 
-    
     [HttpGet("health/ready")]
-    public async Task<IActionResult> GetReady()
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> GetReady(CancellationToken ct = default)
     {
-        var traceId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
-        var assetsConnected = await _reservationStatusService.IsAssetsServiceReadyAsync();
-        var reservationsConnected = await _reservationStatusService.IsReservationsDatabaseConnectedAsync();
-        
+        var traceId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        var assetsConnected = await reservationStatusService.IsAssetsServiceReadyAsync(ct);
+        var reservationsConnected = await reservationStatusService.IsReservationsDatabaseConnectedAsync(ct);
+
         if (!assetsConnected)
         {
             return StatusCode(503, new
@@ -63,7 +78,7 @@ public class StatusController : Controller
                 trace = traceId
             });
         }
-        
+
         if (!reservationsConnected)
         {
             return StatusCode(503, new
@@ -80,7 +95,7 @@ public class StatusController : Controller
                 trace = traceId
             });
         }
-        
+
         return Ok(new { ready = true });
     }
 }
