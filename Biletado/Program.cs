@@ -1,6 +1,10 @@
 using Biletado.Contexts;
 using Biletado.Repository;
 using Biletado.Services;
+using Biletado.Domain;
+using Biletado.DTOs;
+using Biletado.Controllers;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace Biletado;
@@ -27,7 +31,8 @@ public class Program
         // Register Repository and Services
         builder.Services.AddScoped<ReservationServiceRepository>();
         builder.Services.AddScoped<IReservationStatusService, ReservationStatusService>();
-
+        builder.Services.AddScoped<ReservationStatusService>();
+        
         // Configure Swagger/OpenAPI
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

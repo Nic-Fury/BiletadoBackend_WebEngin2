@@ -33,10 +33,12 @@ public class StatusController : Controller
     }
     
     [HttpGet("health/live")]
-    public async Task<IActionResult> GetLive()
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GetLive()
     {
-        return Ok(new{live = true});
+        return Ok(new { live = true });
     }
+
     
     [HttpGet("health/ready")]
     public async Task<IActionResult> GetReady()
