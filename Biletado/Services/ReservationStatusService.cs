@@ -16,6 +16,8 @@ public interface IReservationStatusService
         DateOnly? before = null,
         DateOnly? after = null,
         CancellationToken ct = default);
+    Task<bool> IsRoomExistingAsync(Guid roomId, CancellationToken ct = default);
+    Task<bool> IsRoomFree(Guid roomId, DateOnly from, DateOnly to, CancellationToken ct = default);
 }
 public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository,Contexts.ReservationsDbContext db, IConfiguration config) : IReservationStatusService
 {
@@ -91,7 +93,7 @@ public class ReservationStatusService (ReservationServiceRepository ReservationS
         return list.Select(r => new ReservationResponse(r.Id, r.From, r.To, r.RoomId, r.DeletedAt)).ToList();
     }
     
-     public async Task<bool> IsRoomExistingAsync(Guid roomId, CancellationToken ct = default)
+    public async Task<bool> IsRoomExistingAsync(Guid roomId, CancellationToken ct = default)
     {
         var baseUrl = config["Services:Assets:BaseUrl"];
         var port = config["Services:Assets:Port"];
@@ -129,7 +131,25 @@ public class ReservationStatusService (ReservationServiceRepository ReservationS
         }
     }
 
-
-
-
+    public async Task<bool> IsRoomFree(Guid roomId, DateOnly from, DateOnly to, CancellationToken ct = default)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            var existingReservations = await ReservationServiceRepository.GetAllAsync(false, ct);
+            var conflictingReservations = existingReservations.Where(r => 
+                r.RoomId == roomId && 
+                r.From < to && 
+                r.To > from
+            ).ToList();
+            
+            sw.Stop();
+            return conflictingReservations.Count == 0;
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            return false;
+        }
+    }
 }

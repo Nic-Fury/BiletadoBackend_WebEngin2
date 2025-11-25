@@ -55,47 +55,37 @@ public class ReservationsController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> PostReservation([FromBody] CreateReservationRequest request, CancellationToken ct)
-    {
-        var errors = new List<DeleteError>();
-        if (request.RoomId == Guid.Empty) {
-            errors.Add(new DeleteError("bad_request", "room_id must not be empty."));
-        }
-
-        if (request.From > request.To) {
-            errors.Add(
-                new DeleteError("bad_request", "from must not be after to.")
-            );
-        }
-
-        var roomExists = await ReservationStatusService.IsRoomExistingAsync(request.RoomId, ct);
-        if (!roomExists) {
-            errors.Add(new DeleteError("bad_request", "room_id refers to a non-existing room."));
-        }
-
-        var roomFree = await ReservationStatusService.IsRoomFree(request.RoomId, request.From, request.To, ct);
-        if (!roomFree)
-        {
-            errors.Add(new DeleteError("bad_request", "room is already reserved for the given date range."));
-        }
-
-        if (errors.Count > 0)
-        {
-            logger.ForContext("event.action", "reservation.create.validation_failed")
-                .ForContext("room.id", request.RoomId)
-                .ForContext("error.count", errors.Count)
-                .Warning("Create reservation validation failed");
-
-            return BadRequest(BuildErrorResponse(errors));
-        }
-
-        var created = await reservationService.CreateReservationAsync(request, ct);
-        logger.ForContext("event.action", "reservation.create.success")
-            .ForContext("object.id", created.Id)
-            .Information("Reservation created successfully");
-
-        return CreatedAtAction(nameof(GetReservationById), new { id = created.Id }, created);
-    }
+    // public async Task<IActionResult> PostReservation([FromBody] CreateReservationRequest request, CancellationToken ct)
+    // {
+    //     var errors = new List<DeleteError>();
+    //     if (request.RoomId == Guid.Empty) {
+    //         errors.Add(new DeleteError("bad_request", "room_id must not be empty."));
+    //     }
+    //
+    //     if (request.From > request.To) {
+    //         errors.Add(
+    //             new DeleteError("bad_request", "from must not be after to.")
+    //         );
+    //     }
+    //
+    //     var roomExists = await _reservationStatusService.IsRoomExistingAsync(request.RoomId, ct);
+    //     if (!roomExists) {
+    //         errors.Add(new DeleteError("bad_request", "room_id refers to a non-existing room."));
+    //     }
+    //
+    //     var roomFree = await _reservationStatusService.IsRoomFree(request.RoomId, request.From, request.To, ct);
+    //     if (!roomFree) {
+    //         errors.Add(new DeleteError("bad_request", "room is already reserved for the given date range."));
+    //     }
+    //
+    //     if (errors.Count > 0) {
+    //      
+    //         return BadRequest(BuildErrorResponse(errors));
+    //     }
+    //
+    //     var created = await ReservationStatusService.CreateReservationAsync(request, ct);
+    //     return CreatedAtAction(nameof(GetReservationById), new { id = created.Id }, created);
+    // }
 
 
     [HttpGet("{id}")]
