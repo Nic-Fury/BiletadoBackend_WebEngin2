@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Biletado.DTOs;
 using Biletado.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -6,109 +7,190 @@ namespace Biletado.Controllers;
 
 [ApiController]
 [Route("api/v3/reservations/reservations")]
-public class ReservationsController : Controller
+public class ReservationsController(IReservationService reservationService) : ControllerBase
 {
-    private readonly IReservationStatusService _reservationStatusService;
-
-    public ReservationsController(IReservationStatusService reservationStatusService)
-    {
-        _reservationStatusService = reservationStatusService;
-    }
-
     [HttpGet]
-    // [ProducesResponseType(200)]
-    // [ProducesResponseType(400)]
-    
+    [ProducesResponseType(typeof(ReservationListResponse), 200)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
     public async Task<IActionResult> GetAllReservations(
-            [FromQuery(Name = "include_deleted")] bool includeDeleted = false,
-            [FromQuery(Name = "room_id")] string? roomId = null,
-            [FromQuery] string? before = null,
-            [FromQuery] string? after = null,
-            CancellationToken ct = default)
+        [FromQuery(Name = "include_deleted")] bool includeDeleted = false,
+        [FromQuery(Name = "room_id")] string? roomId = null,
+        [FromQuery] string? before = null,
+        [FromQuery] string? after = null,
+        CancellationToken ct = default)
     {
         Guid? roomGuid = null;
-        if (!string.IsNullOrWhiteSpace(roomId)) {
-            if (Guid.TryParse(roomId, out var parsed)) roomGuid = parsed;
-            else {
-                return BadRequest(ErrorResponse("bad_request", "Invalid room_id."));
+        if (!string.IsNullOrWhiteSpace(roomId))
+        {
+            if (Guid.TryParse(roomId, out var parsed))
+            {
+                roomGuid = parsed;
+            }
+            else
+            {
+                return BadRequest(BuildErrorResponse("bad_request", "Invalid room_id."));
             }
         }
 
         DateOnly? beforeDate = null;
-        if (!string.IsNullOrWhiteSpace(before)) {
+        if (!string.IsNullOrWhiteSpace(before))
+        {
             if (DateOnly.TryParse(before, out var b)) beforeDate = b;
-            else {
-                return BadRequest(ErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
+            else
+            {
+                return BadRequest(BuildErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
             }
         }
 
         DateOnly? afterDate = null;
-        if (!string.IsNullOrWhiteSpace(after)) {
+        if (!string.IsNullOrWhiteSpace(after))
+        {
             if (DateOnly.TryParse(after, out var a)) afterDate = a;
-            else {
-                return BadRequest(ErrorResponse("bad_request", "Invalid after date (YYYY-MM-DD)."));
+            else
+            {
+                return BadRequest(BuildErrorResponse("bad_request", "Invalid after date (YYYY-MM-DD)."));
             }
         }
 
-        var data = await _reservationStatusService.GetAllReservationsAsync(includeDeleted, roomGuid, beforeDate, afterDate, ct);
+        var data = await reservationService.GetAllReservationsAsync(
+            includeDeleted,
+            roomGuid,
+            beforeDate,
+            afterDate,
+            ct
+        );
 
-        return Ok(new { reservations = data });
+        return Ok(new ReservationListResponse { Reservations = data });
     }
 
     [HttpPost]
-    // public async Task<IActionResult> PostReservation([FromBody] CreateReservationRequest request, CancellationToken ct)
-    // {
-    //     var errors = new List<DeleteError>();
-    //     if (request.RoomId == Guid.Empty) {
-    //         errors.Add(new DeleteError("bad_request", "room_id must not be empty."));
-    //     }
-    //
-    //     if (request.From > request.To) {
-    //         errors.Add(
-    //             new DeleteError("bad_request", "from must not be after to.")
-    //         );
-    //     }
-    //
-    //     var roomExists = await _reservationStatusService.IsRoomExistingAsync(request.RoomId, ct);
-    //     if (!roomExists) {
-    //         errors.Add(new DeleteError("bad_request", "room_id refers to a non-existing room."));
-    //     }
-    //
-    //     var roomFree = await _reservationStatusService.IsRoomFree(request.RoomId, request.From, request.To, ct);
-    //     if (!roomFree) {
-    //         errors.Add(new DeleteError("bad_request", "room is already reserved for the given date range."));
-    //     }
-    //
-    //     if (errors.Count > 0) {
-    //      
-    //         return BadRequest(BuildErrorResponse(errors));
-    //     }
-    //
-    //     var created = await ReservationStatusService.CreateReservationAsync(request, ct);
-    //     return CreatedAtAction(nameof(GetReservationById), new { id = created.Id }, created);
-    // }
+    [ProducesResponseType(typeof(ReservationResponse), 201)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
+    public async Task<IActionResult> PostReservation([FromBody] CreateReservationRequest request, CancellationToken ct)
+    {
+        var errors = new List<DeleteError>();
+        if (request.RoomId == Guid.Empty)
+        {
+            errors.Add(new DeleteError("bad_request", "room_id must not be empty."));
+        }
 
+        if (request.From > request.To)
+        {
+            errors.Add(new DeleteError("bad_request", "from must not be after to."));
+        }
+
+        var roomExists = await reservationService.IsRoomExistingAsync(request.RoomId, ct);
+        if (!roomExists)
+        {
+            errors.Add(new DeleteError("bad_request", "room_id refers to a non-existing room."));
+        }
+
+        var roomFree = await reservationService.IsRoomFree(request.RoomId, request.From, request.To, ct);
+        if (!roomFree)
+        {
+            errors.Add(new DeleteError("bad_request", "room is already reserved for the given date range."));
+        }
+
+        if (errors.Count > 0)
+        {
+            return BadRequest(BuildErrorResponse(errors));
+        }
+
+        var created = await reservationService.CreateReservationAsync(request, ct);
+        return CreatedAtAction(nameof(GetReservationById), new { id = created.Id }, created);
+    }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetReservationByID()
+    [ProducesResponseType(typeof(ReservationResponse), 200)]
+    [ProducesResponseType(typeof(ErrorResponse), 404)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
+    public async Task<IActionResult> GetReservationById(string id, CancellationToken ct)
     {
-        return Ok();
+        if (!Guid.TryParse(id, out var guid))
+        {
+            return BadRequest(BuildErrorResponse("bad_request", "Invalid Id."));
+        }
+
+        var res = await reservationService.GetReservationByIdAsync(guid, ct);
+        if (res is null)
+        {
+            return NotFound(BuildErrorResponse("bad_request", "Reservation not found."));
+        }
+
+        return Ok(res);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutReservationByID()
+    [ProducesResponseType(typeof(ReservationResponse), 200)]
+    [ProducesResponseType(typeof(ReservationResponse), 201)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
+    public async Task<IActionResult> PutReservationById(string id, [FromBody] CreateReservationRequest request, CancellationToken ct)
     {
-        return Ok();
+        if (!Guid.TryParse(id, out var guid))
+        {
+            return BadRequest(BuildErrorResponse("bad_request", "Invalid Id."));
+        }
+
+        var result = await reservationService.ReplaceOrCreateReservationAsync(guid, request, ct);
+        if (!result.Success)
+        {
+            return BadRequest(BuildErrorResponse(result.Errors));
+        }
+
+        var body = result.Response!;
+        if (result.Created)
+        {
+            return CreatedAtAction(nameof(GetReservationById), new { id = body.Id }, body);
+        }
+
+        return Ok(body);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteReservationByID()
+    [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(ErrorResponse), 404)]
+    [ProducesResponseType(typeof(ErrorResponse), 400)]
+    public async Task<IActionResult> DeleteReservationById(string id, CancellationToken ct, [FromQuery] bool permanent = false)
     {
-        return Ok();
+        if (!Guid.TryParse(id, out var guid))
+        {
+            return BadRequest(BuildErrorResponse("bad_request", "Invalid Id."));
+        }
+
+        var result = await reservationService.DeleteReservationAsync(guid, permanent, ct);
+        if (result.Success)
+        {
+            return NoContent();
+        }
+
+        var hasNotFound = result.Errors.Any(e => e.Code is "reservation_not_found" or "reservation_already_deleted");
+        if (hasNotFound)
+        {
+            return NotFound(BuildErrorResponse(result.Errors));
+        }
+
+        return BadRequest(BuildErrorResponse(result.Errors));
     }
 
-    private object ErrorResponse(string code, string message)
+    private ErrorResponse BuildErrorResponse(string code, string message)
     {
-        return new { error = new { code, message } };
+        return BuildErrorResponse([new DeleteError(code, message)]);
+    }
+
+    private ErrorResponse BuildErrorResponse(IEnumerable<DeleteError> errors)
+    {
+        var trace = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        var errorDtos = errors.Select(e => new ErrorDetail
+        {
+            Code = e.Code,
+            Message = e.Message,
+            MoreInfo = e.MoreInfo
+        }).ToList();
+
+        return new ErrorResponse
+        {
+            Errors = errorDtos,
+            Trace = trace
+        };
     }
 }

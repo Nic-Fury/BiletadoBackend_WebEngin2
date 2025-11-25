@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Biletado.DTOs;
+using Biletado.Domain;
 using Biletado.Repository;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,7 +20,7 @@ public interface IReservationStatusService
     Task<bool> IsRoomExistingAsync(Guid roomId, CancellationToken ct = default);
     Task<bool> IsRoomFree(Guid roomId, DateOnly from, DateOnly to, CancellationToken ct = default);
 }
-public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository,Contexts.ReservationsDbContext db, IConfiguration config) : IReservationStatusService
+public class ReservationStatusService (ReservationServiceRepository ReservationServiceRepository,Contexts.ReservationsDbContext db, IConfiguration config) : IReservationStatusService, IReservationService
 {
     public async Task<bool> IsAssetsServiceReadyAsync(CancellationToken ct = default)
     {
@@ -151,5 +152,143 @@ public class ReservationStatusService (ReservationServiceRepository ReservationS
             sw.Stop();
             return false;
         }
+    }
+
+    public async Task<bool> IsRoomFree(Guid roomId, DateOnly from, DateOnly to, Guid? excludeReservationId, CancellationToken ct = default)
+    {
+        var existingReservations = await ReservationServiceRepository.GetAllAsync(false, ct);
+        var conflictingReservations = existingReservations.Where(r => 
+            r.RoomId == roomId && 
+            r.From < to && 
+            r.To > from &&
+            r.Id != excludeReservationId
+        ).ToList();
+        
+        return conflictingReservations.Count == 0;
+    }
+
+    public async Task<ReservationResponse?> GetReservationByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        var list = await ReservationServiceRepository.GetAllAsync(true, ct);
+        var reservation = list.FirstOrDefault(r => r.Id == id);
+        if (reservation == null) return null;
+        return new ReservationResponse(reservation.Id, reservation.From, reservation.To, reservation.RoomId, reservation.DeletedAt);
+    }
+
+    public async Task<ReservationResponse> CreateReservationAsync(CreateReservationRequest request, CancellationToken ct = default)
+    {
+        var reservation = new Reservation
+        {
+            Id = Guid.NewGuid(),
+            RoomId = request.RoomId,
+            From = request.From,
+            To = request.To,
+            DeletedAt = null
+        };
+
+        db.Reservations.Add(reservation);
+        await db.SaveChangesAsync(ct);
+
+        return new ReservationResponse(reservation.Id, reservation.From, reservation.To, reservation.RoomId, reservation.DeletedAt);
+    }
+
+    public async Task<ReservationResponse?> UpdateReservationAsync(Guid id, CreateReservationRequest request, CancellationToken ct = default)
+    {
+        var reservation = await db.Reservations.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (reservation == null) return null;
+
+        reservation.RoomId = request.RoomId;
+        reservation.From = request.From;
+        reservation.To = request.To;
+        reservation.DeletedAt = null;
+
+        await db.SaveChangesAsync(ct);
+
+        return new ReservationResponse(reservation.Id, reservation.From, reservation.To, reservation.RoomId, reservation.DeletedAt);
+    }
+
+    public async Task<UpsertReservationResult> ReplaceOrCreateReservationAsync(Guid id, CreateReservationRequest request, CancellationToken ct = default)
+    {
+        var errors = new List<DeleteError>();
+
+        if (request.RoomId == Guid.Empty)
+        {
+            errors.Add(new DeleteError("bad_request", "room_id must not be empty."));
+        }
+
+        if (request.From > request.To)
+        {
+            errors.Add(new DeleteError("bad_request", "from must not be after to."));
+        }
+
+        var roomExists = await IsRoomExistingAsync(request.RoomId, ct);
+        if (!roomExists)
+        {
+            errors.Add(new DeleteError("bad_request", "room_id refers to a non-existing room."));
+        }
+
+        var existing = await db.Reservations.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == id, ct);
+        
+        var roomFree = await IsRoomFree(request.RoomId, request.From, request.To, existing?.Id, ct);
+        if (!roomFree)
+        {
+            errors.Add(new DeleteError("bad_request", "room is already reserved for the given date range."));
+        }
+
+        if (errors.Count > 0)
+        {
+            return UpsertReservationResult.Failure([.. errors]);
+        }
+
+        if (existing != null)
+        {
+            existing.RoomId = request.RoomId;
+            existing.From = request.From;
+            existing.To = request.To;
+            existing.DeletedAt = null;
+
+            await db.SaveChangesAsync(ct);
+            return UpsertReservationResult.UpdatedResult(new ReservationResponse(existing.Id, existing.From, existing.To, existing.RoomId, existing.DeletedAt));
+        }
+
+        var newReservation = new Reservation
+        {
+            Id = id,
+            RoomId = request.RoomId,
+            From = request.From,
+            To = request.To,
+            DeletedAt = null
+        };
+
+        db.Reservations.Add(newReservation);
+        await db.SaveChangesAsync(ct);
+
+        return UpsertReservationResult.CreatedResult(new ReservationResponse(newReservation.Id, newReservation.From, newReservation.To, newReservation.RoomId, newReservation.DeletedAt));
+    }
+
+    public async Task<DeleteReservationResult> DeleteReservationAsync(Guid id, bool permanent = false, CancellationToken ct = default)
+    {
+        var reservation = await db.Reservations.IgnoreQueryFilters().FirstOrDefaultAsync(r => r.Id == id, ct);
+
+        if (reservation == null)
+        {
+            return DeleteReservationResult.Failure(new DeleteError("reservation_not_found", "Reservation not found."));
+        }
+
+        if (permanent)
+        {
+            db.Reservations.Remove(reservation);
+            await db.SaveChangesAsync(ct);
+            return DeleteReservationResult.HardDeleted();
+        }
+
+        if (reservation.DeletedAt != null)
+        {
+            return DeleteReservationResult.Failure(new DeleteError("reservation_already_deleted", "Reservation is already deleted."));
+        }
+
+        reservation.DeletedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(ct);
+        return DeleteReservationResult.SoftDeleted();
     }
 }
