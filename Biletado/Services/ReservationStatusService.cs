@@ -25,11 +25,13 @@ public class ReservationStatusService (ReservationServiceRepository ReservationS
     public async Task<bool> IsAssetsServiceReadyAsync(CancellationToken ct = default)
     {
         var baseUrl = config["Services:Assets:BaseUrl"];
+        var port = config["Services:Assets:Port"];
+        var url = $"{baseUrl}:{port}";
         var readyPath = config["Services:Assets:ReadyPath"];
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         using var client = new HttpClient();
-        client.BaseAddress = new Uri(baseUrl!);
+        client.BaseAddress = new Uri(url!);
         try
         {
             var response = await client.GetAsync(readyPath, ct);
