@@ -5,6 +5,12 @@ Projekt das im Rahmen der WebEngineering2 Vorlesung entstanden ist
 
 This application uses **Serilog** for comprehensive structured logging in JSON format, compatible with Elastic Common Schema and OpenTelemetry standards.
 
+### Where are logs output?
+
+By default, logs are written to the **console** (standard output) in JSON format. When you run the application with `dotnet run`, you'll see the structured JSON logs in your terminal/console.
+
+To also write logs to a **file**, you can add the File sink (see "Adding File Logging" section below).
+
 ### Configuration
 
 Log levels and output format can be configured in `appsettings.json`:
@@ -128,6 +134,41 @@ The structured JSON logs can be ingested into:
 - **Grafana Loki** for cloud-native logging
 - **Azure Monitor** or **AWS CloudWatch** for cloud deployments
 - Any system supporting **Elastic Common Schema** or **OpenTelemetry**
+
+### Adding File Logging (Optional)
+
+To also write logs to files, follow these steps:
+
+1. **Add the File sink package:**
+   ```bash
+   dotnet add package Serilog.Sinks.File
+   ```
+
+2. **Update `appsettings.json`** to include the File sink:
+   ```json
+   {
+     "Serilog": {
+       "WriteTo": [
+         {
+           "Name": "Console",
+           "Args": {
+             "formatter": "Serilog.Formatting.Compact.CompactJsonFormatter, Serilog.Formatting.Compact"
+           }
+         },
+         {
+           "Name": "File",
+           "Args": {
+             "path": "logs/biletado-.log",
+             "rollingInterval": "Day",
+             "formatter": "Serilog.Formatting.Compact.CompactJsonFormatter, Serilog.Formatting.Compact"
+           }
+         }
+       ]
+     }
+   }
+   ```
+
+This will create log files in the `logs/` directory with daily rotation (e.g., `biletado-20260105.log`).
 
 ### Privacy & Security
 
