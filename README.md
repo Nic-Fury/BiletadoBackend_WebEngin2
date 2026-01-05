@@ -1,5 +1,178 @@
-# BiletadoBackend_WebEngin2
-Projekt das im Rahmen der WebEngineering2 Vorlesung entstanden ist
+# Biletado Reservations API
+
+Projekt das im Rahmen der WebEngineering2 Vorlesung entstanden ist - A RESTful API for managing room reservations with soft-delete support.
+
+## Overview
+
+Biletado is a reservation management system built with ASP.NET Core 8.0 that provides CRUD operations for room reservations. The API integrates with an external Assets service for room validation and uses PostgreSQL for data persistence.
+
+## Features
+
+- **CRUD Operations**: Create, read, update, and delete room reservations
+- **Soft Delete**: Reservations can be soft-deleted or permanently removed
+- **Room Validation**: Integration with external Assets service to validate room existence
+- **Conflict Detection**: Automatic detection of overlapping reservations
+- **Health Checks**: Comprehensive health and readiness endpoints for Kubernetes
+- **Structured Logging**: JSON-formatted logs with Serilog for observability
+- **API Versioning**: RESTful API endpoints under `/api/v3/reservations`
+
+## Technology Stack
+
+- **Framework**: ASP.NET Core 8.0
+- **Database**: PostgreSQL with Entity Framework Core 8.0
+- **Logging**: Serilog with structured JSON output
+- **API Documentation**: Swagger/OpenAPI
+- **Containerization**: Docker support
+
+## Prerequisites
+
+- .NET 8.0 SDK
+- PostgreSQL 12+
+- Docker (optional, for containerized deployment)
+
+## Getting Started
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Nic-Fury/BiletadoBackend_WebEngin2.git
+   cd BiletadoBackend_WebEngin2/Biletado
+   ```
+
+2. **Configure the database connection:**
+   
+   Update `appsettings.json` with your PostgreSQL connection string:
+   ```json
+   {
+     "ConnectionStrings": {
+       "ReservationsDb": "Host=localhost;Port=5432;Database=reservations_v3;Username=postgres;Password=yourpassword"
+     }
+   }
+   ```
+
+3. **Run database migrations:**
+   ```bash
+   dotnet ef database update
+   ```
+
+4. **Start the application:**
+   ```bash
+   dotnet run
+   ```
+
+The API will be available at `http://localhost:5087` (or the port specified in your launch settings).
+
+### Docker Deployment
+
+Build and run with Docker:
+
+```bash
+docker build -t biletado-api .
+docker run -p 8080:8080 -e ConnectionStrings__ReservationsDb="Host=your-db-host;..." biletado-api
+```
+
+## API Documentation
+
+### Endpoints
+
+#### Health & Status
+- `GET /api/v3/reservations/status` - API version and authors
+- `GET /api/v3/reservations/health` - Overall health status
+- `GET /api/v3/reservations/health/live` - Liveness probe
+- `GET /api/v3/reservations/health/ready` - Readiness probe
+
+#### Reservations
+- `GET /api/v3/reservations/reservations` - List all reservations
+  - Query params: `include_deleted`, `room_id`, `before`, `after`
+- `GET /api/v3/reservations/reservations/{id}` - Get reservation by ID
+- `POST /api/v3/reservations/reservations` - Create new reservation
+- `PUT /api/v3/reservations/reservations/{id}` - Update or create reservation
+- `DELETE /api/v3/reservations/reservations/{id}` - Delete reservation
+  - Query param: `permanent` (soft-delete by default)
+
+### Swagger UI
+
+Access interactive API documentation at `/swagger` when running in Development mode.
+
+## Project Structure
+
+```
+Biletado/
+├── Controllers/          # API endpoints
+│   ├── ReservationsController.cs
+│   └── StatusController.cs
+├── Services/            # Business logic layer
+│   ├── IReservationService.cs
+│   └── ReservationStatusService.cs
+├── Repository/          # Data access layer
+│   └── ReservationServiceRepository.cs
+├── Contexts/            # Entity Framework DbContext
+│   └── ReservationsDbContext.cs
+├── Domain/              # Domain models
+│   └── Reservation.cs
+├── DTOs/                # Data transfer objects
+├── Program.cs           # Application entry point
+├── appsettings.json     # Configuration
+└── Dockerfile           # Container definition
+```
+
+## Configuration
+
+### Application Settings
+
+Key configuration sections in `appsettings.json`:
+
+**Database Connection:**
+```json
+{
+  "ConnectionStrings": {
+    "ReservationsDb": "Host=localhost;Port=5432;Database=reservations_v3;..."
+  }
+}
+```
+
+**External Services:**
+```json
+{
+  "Services": {
+    "Assets": {
+      "BaseUrl": "http://localhost",
+      "Port": "9090",
+      "ReadyPath": "/api/v3/assets/health/ready",
+      "RoomPath": "/api/v3/assets/rooms/{id}"
+    }
+  }
+}
+```
+
+**Logging Configuration:** See [Logging](#logging) section below.
+
+## Development
+
+### Building the Project
+
+```bash
+dotnet build
+```
+
+### Running Tests
+
+```bash
+dotnet test
+```
+
+### Database Migrations
+
+Create a new migration:
+```bash
+dotnet ef migrations add MigrationName
+```
+
+Apply migrations:
+```bash
+dotnet ef database update
+```
 
 ## Logging
 
@@ -176,3 +349,26 @@ This will create log files in the `logs/` directory with daily rotation (e.g., `
 - Exception stack traces are logged for debugging
 - Personal data (if any) follows GDPR guidelines
 - Connection strings are not logged
+
+## Contributing
+
+This project was created as part of the WebEngineering2 course. Contributions are welcome:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Authors
+
+- **Nic Nouisser**
+- **Jakob Kaufmann**
+
+## Acknowledgments
+
+Created as part of the WebEngineering2 course project.
