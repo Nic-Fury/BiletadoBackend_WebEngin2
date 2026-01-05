@@ -136,7 +136,7 @@ public class ReservationStatusService (ReservationServiceRepository ReservationS
             {
                 logger.LogWarning("Room check returned non-OK status: RoomId={RoomId}, StatusCode={StatusCode}, ElapsedMs={ElapsedMs}",
                     roomId, response.StatusCode, sw.ElapsedMilliseconds);
-                return response.StatusCode == System.Net.HttpStatusCode.OK;
+                return false;
             }
 
             var json = await response.Content.ReadAsStringAsync(ct);
