@@ -6,11 +6,12 @@ namespace Biletado.Controllers;
 
 [ApiController]
 [Route("api/v3/reservations")]
-public class StatusController(IReservationStatusService reservationStatusService) : ControllerBase
+public class StatusController(IReservationStatusService reservationStatusService, ILogger<StatusController> logger) : ControllerBase
 {
     [HttpGet("status")]
     public IActionResult GetStatus()
     {
+        logger.LogInformation("Status endpoint called");
         return Ok(new
         {
             authors = new[] { "Nic Nouisser & Jakob Kaufmann" },
@@ -23,10 +24,15 @@ public class StatusController(IReservationStatusService reservationStatusService
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> GetHealth(CancellationToken ct = default)
     {
+        logger.LogInformation("Health check started");
+        
         var assetsConnected = await reservationStatusService.IsAssetsServiceReadyAsync(ct);
         var reservationsConnected = await reservationStatusService.IsReservationsDatabaseConnectedAsync(ct);
 
         var isReady = assetsConnected && reservationsConnected;
+
+        logger.LogInformation("Health check completed: Ready={IsReady}, AssetsConnected={AssetsConnected}, ReservationsDbConnected={ReservationsDbConnected}",
+            isReady, assetsConnected, reservationsConnected);
 
         var response = new
         {
@@ -40,6 +46,7 @@ public class StatusController(IReservationStatusService reservationStatusService
 
         if (!isReady)
         {
+            logger.LogWarning("Service not ready - returning 503");
             return StatusCode(503, response);
         }
 
@@ -50,6 +57,7 @@ public class StatusController(IReservationStatusService reservationStatusService
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetLive()
     {
+        logger.LogDebug("Liveness probe called");
         return Ok(new { live = true });
     }
 
@@ -59,11 +67,14 @@ public class StatusController(IReservationStatusService reservationStatusService
     public async Task<IActionResult> GetReady(CancellationToken ct = default)
     {
         var traceId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        logger.LogInformation("Readiness probe started: TraceId={TraceId}", traceId);
+        
         var assetsConnected = await reservationStatusService.IsAssetsServiceReadyAsync(ct);
         var reservationsConnected = await reservationStatusService.IsReservationsDatabaseConnectedAsync(ct);
 
         if (!assetsConnected)
         {
+            logger.LogError("Assets service is not reachable: TraceId={TraceId}", traceId);
             return StatusCode(503, new
             {
                 errors = new[]
@@ -81,6 +92,7 @@ public class StatusController(IReservationStatusService reservationStatusService
 
         if (!reservationsConnected)
         {
+            logger.LogError("Reservation database is not reachable: TraceId={TraceId}", traceId);
             return StatusCode(503, new
             {
                 errors = new[]
@@ -96,6 +108,7 @@ public class StatusController(IReservationStatusService reservationStatusService
             });
         }
 
+        logger.LogInformation("Readiness probe successful: TraceId={TraceId}", traceId);
         return Ok(new { ready = true });
     }
 }

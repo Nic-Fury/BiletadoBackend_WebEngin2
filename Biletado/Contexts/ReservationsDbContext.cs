@@ -3,8 +3,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Biletado.Contexts;
 
-public class ReservationsDbContext(DbContextOptions<ReservationsDbContext> options) : DbContext(options)
+public class ReservationsDbContext : DbContext
 {
+    private readonly ILogger<ReservationsDbContext>? _logger;
+    
+    public ReservationsDbContext(DbContextOptions<ReservationsDbContext> options, ILogger<ReservationsDbContext>? logger = null) : base(options)
+    {
+        _logger = logger;
+    }
+    
     public DbSet<Reservation> Reservations => Set<Reservation>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -24,5 +31,21 @@ public class ReservationsDbContext(DbContextOptions<ReservationsDbContext> optio
             r.HasIndex(x => new { x.RoomId, x.From, x.To })
                 .HasDatabaseName("ix_reservations_room_id_start_time_end_time");
         });
+    }
+    
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        _logger?.LogDebug("Saving changes to database");
+        try
+        {
+            var result = await base.SaveChangesAsync(cancellationToken);
+            _logger?.LogInformation("Database changes saved: {ChangeCount} entities affected", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to save changes to database");
+            throw;
+        }
     }
 }

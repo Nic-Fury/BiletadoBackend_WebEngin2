@@ -7,7 +7,7 @@ namespace Biletado.Controllers;
 
 [ApiController]
 [Route("api/v3/reservations/reservations")]
-public class ReservationsController(IReservationService reservationService) : ControllerBase
+public class ReservationsController(IReservationService reservationService, ILogger<ReservationsController> logger) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(ReservationListResponse), 200)]
@@ -19,6 +19,9 @@ public class ReservationsController(IReservationService reservationService) : Co
         [FromQuery] string? after = null,
         CancellationToken ct = default)
     {
+        logger.LogInformation("Getting all reservations: IncludeDeleted={IncludeDeleted}, RoomId={RoomId}, Before={Before}, After={After}",
+            includeDeleted, roomId, before, after);
+
         Guid? roomGuid = null;
         if (!string.IsNullOrWhiteSpace(roomId))
         {
@@ -28,6 +31,7 @@ public class ReservationsController(IReservationService reservationService) : Co
             }
             else
             {
+                logger.LogWarning("Invalid room_id provided: {RoomId}", roomId);
                 return BadRequest(BuildErrorResponse("bad_request", "Invalid room_id."));
             }
         }
@@ -38,6 +42,7 @@ public class ReservationsController(IReservationService reservationService) : Co
             if (DateOnly.TryParse(before, out var b)) beforeDate = b;
             else
             {
+                logger.LogWarning("Invalid before date provided: {Before}", before);
                 return BadRequest(BuildErrorResponse("bad_request", "Invalid before date (YYYY-MM-DD)."));
             }
         }
@@ -48,6 +53,7 @@ public class ReservationsController(IReservationService reservationService) : Co
             if (DateOnly.TryParse(after, out var a)) afterDate = a;
             else
             {
+                logger.LogWarning("Invalid after date provided: {After}", after);
                 return BadRequest(BuildErrorResponse("bad_request", "Invalid after date (YYYY-MM-DD)."));
             }
         }
@@ -60,6 +66,7 @@ public class ReservationsController(IReservationService reservationService) : Co
             ct
         );
 
+        logger.LogInformation("Retrieved {Count} reservations", data.Count);
         return Ok(new ReservationListResponse { Reservations = data });
     }
 
@@ -68,6 +75,9 @@ public class ReservationsController(IReservationService reservationService) : Co
     [ProducesResponseType(typeof(ErrorResponse), 400)]
     public async Task<IActionResult> PostReservation([FromBody] CreateReservationRequest request, CancellationToken ct)
     {
+        logger.LogInformation("Creating reservation: RoomId={RoomId}, From={From}, To={To}",
+            request.RoomId, request.From, request.To);
+
         var errors = new List<DeleteError>();
         if (request.RoomId == Guid.Empty)
         {
@@ -82,21 +92,28 @@ public class ReservationsController(IReservationService reservationService) : Co
         var roomExists = await reservationService.IsRoomExistingAsync(request.RoomId, ct);
         if (!roomExists)
         {
+            logger.LogWarning("Room not found: RoomId={RoomId}", request.RoomId);
             errors.Add(new DeleteError("bad_request", "room_id refers to a non-existing room."));
         }
 
         var roomFree = await reservationService.IsRoomFree(request.RoomId, request.From, request.To, ct);
         if (!roomFree)
         {
+            logger.LogWarning("Room already reserved: RoomId={RoomId}, From={From}, To={To}",
+                request.RoomId, request.From, request.To);
             errors.Add(new DeleteError("bad_request", "room is already reserved for the given date range."));
         }
 
         if (errors.Count > 0)
         {
+            logger.LogWarning("Reservation creation failed with {ErrorCount} validation errors", errors.Count);
             return BadRequest(BuildErrorResponse(errors));
         }
 
         var created = await reservationService.CreateReservationAsync(request, ct);
+        logger.LogInformation("Reservation created successfully: ReservationId={ReservationId}, RoomId={RoomId}",
+            created.Id, created.RoomId);
+        
         return CreatedAtAction(nameof(GetReservationById), new { id = created.Id }, created);
     }
 
@@ -106,17 +123,23 @@ public class ReservationsController(IReservationService reservationService) : Co
     [ProducesResponseType(typeof(ErrorResponse), 400)]
     public async Task<IActionResult> GetReservationById(string id, CancellationToken ct)
     {
+        logger.LogInformation("Getting reservation by ID: ReservationId={ReservationId}", id);
+
         if (!Guid.TryParse(id, out var guid))
         {
+            logger.LogWarning("Invalid reservation ID format: {ReservationId}", id);
             return BadRequest(BuildErrorResponse("bad_request", "Invalid Id."));
         }
 
         var res = await reservationService.GetReservationByIdAsync(guid, ct);
         if (res is null)
         {
+            logger.LogWarning("Reservation not found: ReservationId={ReservationId}", guid);
             return NotFound(BuildErrorResponse("bad_request", "Reservation not found."));
         }
 
+        logger.LogInformation("Reservation retrieved: ReservationId={ReservationId}, RoomId={RoomId}",
+            res.Id, res.RoomId);
         return Ok(res);
     }
 
@@ -126,23 +149,33 @@ public class ReservationsController(IReservationService reservationService) : Co
     [ProducesResponseType(typeof(ErrorResponse), 400)]
     public async Task<IActionResult> PutReservationById(string id, [FromBody] CreateReservationRequest request, CancellationToken ct)
     {
+        logger.LogInformation("Replacing or creating reservation: ReservationId={ReservationId}, RoomId={RoomId}, From={From}, To={To}",
+            id, request.RoomId, request.From, request.To);
+
         if (!Guid.TryParse(id, out var guid))
         {
+            logger.LogWarning("Invalid reservation ID format: {ReservationId}", id);
             return BadRequest(BuildErrorResponse("bad_request", "Invalid Id."));
         }
 
         var result = await reservationService.ReplaceOrCreateReservationAsync(guid, request, ct);
         if (!result.Success)
         {
+            logger.LogWarning("Reservation upsert failed: ReservationId={ReservationId}, ErrorCount={ErrorCount}",
+                guid, result.Errors.Count);
             return BadRequest(BuildErrorResponse(result.Errors));
         }
 
         var body = result.Response!;
         if (result.Created)
         {
+            logger.LogInformation("Reservation created via PUT: ReservationId={ReservationId}, RoomId={RoomId}",
+                body.Id, body.RoomId);
             return CreatedAtAction(nameof(GetReservationById), new { id = body.Id }, body);
         }
 
+        logger.LogInformation("Reservation updated via PUT: ReservationId={ReservationId}, RoomId={RoomId}",
+            body.Id, body.RoomId);
         return Ok(body);
     }
 
@@ -152,23 +185,33 @@ public class ReservationsController(IReservationService reservationService) : Co
     [ProducesResponseType(typeof(ErrorResponse), 400)]
     public async Task<IActionResult> DeleteReservationById(string id, CancellationToken ct, [FromQuery] bool permanent = false)
     {
+        logger.LogInformation("Deleting reservation: ReservationId={ReservationId}, Permanent={Permanent}",
+            id, permanent);
+
         if (!Guid.TryParse(id, out var guid))
         {
+            logger.LogWarning("Invalid reservation ID format: {ReservationId}", id);
             return BadRequest(BuildErrorResponse("bad_request", "Invalid Id."));
         }
 
         var result = await reservationService.DeleteReservationAsync(guid, permanent, ct);
         if (result.Success)
         {
+            var deleteType = result.WasHardDeleted ? "permanently" : "soft";
+            logger.LogInformation("Reservation deleted {DeleteType}: ReservationId={ReservationId}",
+                deleteType, guid);
             return NoContent();
         }
 
         var hasNotFound = result.Errors.Any(e => e.Code is "reservation_not_found" or "reservation_already_deleted");
         if (hasNotFound)
         {
+            logger.LogWarning("Reservation delete failed - not found: ReservationId={ReservationId}", guid);
             return NotFound(BuildErrorResponse(result.Errors));
         }
 
+        logger.LogWarning("Reservation delete failed: ReservationId={ReservationId}, ErrorCount={ErrorCount}",
+            guid, result.Errors.Count);
         return BadRequest(BuildErrorResponse(result.Errors));
     }
 
