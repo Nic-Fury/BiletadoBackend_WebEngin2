@@ -58,9 +58,23 @@ public class Program
             builder.Services.AddScoped<IAuthService, AuthService>();
             
             // Configure JWT Authentication
-            var jwtKey = builder.Configuration["Jwt:Key"] ?? "BiletadoDefaultSecretKeyForDevelopmentOnly123!";
-            var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "BiletadoAPI";
-            var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "BiletadoUsers";
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            if (string.IsNullOrWhiteSpace(jwtKey))
+            {
+                throw new InvalidOperationException("JWT Key is not configured. Please set 'Jwt:Key' in appsettings.json");
+            }
+
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+            if (string.IsNullOrWhiteSpace(jwtIssuer))
+            {
+                throw new InvalidOperationException("JWT Issuer is not configured. Please set 'Jwt:Issuer' in appsettings.json");
+            }
+
+            var jwtAudience = builder.Configuration["Jwt:Audience"];
+            if (string.IsNullOrWhiteSpace(jwtAudience))
+            {
+                throw new InvalidOperationException("JWT Audience is not configured. Please set 'Jwt:Audience' in appsettings.json");
+            }
 
             builder.Services.AddAuthentication(options =>
             {

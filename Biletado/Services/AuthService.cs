@@ -69,7 +69,8 @@ public class AuthService : IAuthService
             user.Id, user.Username);
 
         var token = GenerateJwtToken(user.Username, user.Id);
-        var expiresAt = DateTimeOffset.UtcNow.AddHours(24);
+        var expirationHours = _configuration.GetValue<int>("Jwt:TokenExpirationHours", 24);
+        var expiresAt = DateTimeOffset.UtcNow.AddHours(expirationHours);
 
         return new AuthResponse
         {
@@ -103,7 +104,8 @@ public class AuthService : IAuthService
             user.Id, user.Username);
 
         var token = GenerateJwtToken(user.Username, user.Id);
-        var expiresAt = DateTimeOffset.UtcNow.AddHours(24);
+        var expirationHours = _configuration.GetValue<int>("Jwt:TokenExpirationHours", 24);
+        var expiresAt = DateTimeOffset.UtcNow.AddHours(expirationHours);
 
         return new AuthResponse
         {
@@ -115,9 +117,25 @@ public class AuthService : IAuthService
 
     public string GenerateJwtToken(string username, Guid userId)
     {
-        var jwtKey = _configuration["Jwt:Key"] ?? "BiletadoDefaultSecretKeyForDevelopmentOnly123!";
-        var jwtIssuer = _configuration["Jwt:Issuer"] ?? "BiletadoAPI";
-        var jwtAudience = _configuration["Jwt:Audience"] ?? "BiletadoUsers";
+        var jwtKey = _configuration["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(jwtKey))
+        {
+            throw new InvalidOperationException("JWT Key is not configured. Please set 'Jwt:Key' in appsettings.json");
+        }
+
+        var jwtIssuer = _configuration["Jwt:Issuer"];
+        if (string.IsNullOrWhiteSpace(jwtIssuer))
+        {
+            throw new InvalidOperationException("JWT Issuer is not configured. Please set 'Jwt:Issuer' in appsettings.json");
+        }
+
+        var jwtAudience = _configuration["Jwt:Audience"];
+        if (string.IsNullOrWhiteSpace(jwtAudience))
+        {
+            throw new InvalidOperationException("JWT Audience is not configured. Please set 'Jwt:Audience' in appsettings.json");
+        }
+
+        var expirationHours = _configuration.GetValue<int>("Jwt:TokenExpirationHours", 24);
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -134,7 +152,7 @@ public class AuthService : IAuthService
             issuer: jwtIssuer,
             audience: jwtAudience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(24),
+            expires: DateTime.UtcNow.AddHours(expirationHours),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
