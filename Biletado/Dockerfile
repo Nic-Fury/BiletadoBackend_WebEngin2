@@ -1,21 +1,23 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
-EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Biletado/Biletado.csproj", "Biletado/"]
-RUN dotnet restore "Biletado/Biletado.csproj"
+# Copy csproj and restore (context is ./Biletado in the workflow)
+COPY ["Biletado.csproj", "./"]
+RUN dotnet restore "Biletado.csproj"
+
+# Copy the rest and build
 COPY . .
-WORKDIR "/src/Biletado"
-RUN dotnet build "./Biletado.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src"
+RUN dotnet build "Biletado.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Biletado.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Biletado.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
