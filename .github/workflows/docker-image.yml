@@ -41,7 +41,9 @@ jobs:
           file: ./Biletado/Dockerfile
           platforms: linux/amd64
           push: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main') }}
-          tags: ghcr.io/nic-fury/biletado:${{ steps.vars.outputs.short_sha }}
+          tags: |
+            ghcr.io/nic-fury/biletado:${{ github.sha }}
+            ghcr.io/nic-fury/biletado:latest
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=${{ github.repository }}
