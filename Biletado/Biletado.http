@@ -1,6 +1,37 @@
 @Biletado_HostAddress = http://localhost:5087
 
-GET {{Biletado_HostAddress}}/weatherforecast/
+### Register a new user
+POST {{Biletado_HostAddress}}/api/v3/auth/register
+Content-Type: application/json
+
+{
+  "Username": "testuser",
+  "Password": "password123"
+}
+
+###
+
+### Login with existing user
+POST {{Biletado_HostAddress}}/api/v3/auth/login
+Content-Type: application/json
+
+{
+  "Username": "testuser",
+  "Password": "password123"
+}
+
+###
+
+### Get all reservations (requires authentication)
+# Replace <TOKEN> with the token from login/register response
+GET {{Biletado_HostAddress}}/api/v3/reservations/reservations
+Accept: application/json
+Authorization: Bearer <TOKEN>
+
+###
+
+### Get reservation status (no auth required)
+GET {{Biletado_HostAddress}}/api/v3/reservations/status
 Accept: application/json
 
 ###

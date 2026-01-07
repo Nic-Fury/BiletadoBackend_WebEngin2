@@ -8,13 +8,15 @@ Biletado is a reservation management system built with ASP.NET Core 8.0 that pro
 
 ## Features
 
+- **JWT Authentication**: Secure token-based authentication for API access
+- **User Management**: User registration and login functionality
 - **CRUD Operations**: Create, read, update, and delete room reservations
 - **Soft Delete**: Reservations can be soft-deleted or permanently removed
 - **Room Validation**: Integration with external Assets service to validate room existence
 - **Conflict Detection**: Automatic detection of overlapping reservations
 - **Health Checks**: Comprehensive health and readiness endpoints for Kubernetes
 - **Structured Logging**: JSON-formatted logs with Serilog for observability
-- **API Versioning**: RESTful API endpoints under `/api/v3/reservations`
+- **API Versioning**: RESTful API endpoints under `/api/v3/`
 
 ## Technology Stack
 
@@ -76,13 +78,25 @@ docker run -p 8080:8080 -e ConnectionStrings__ReservationsDb="Host=your-db-host;
 
 ### Endpoints
 
-#### Health & Status
-- `GET /api/v3/reservations/status` - API version and authors
-- `GET /api/v3/reservations/health` - Overall health status
-- `GET /api/v3/reservations/health/live` - Liveness probe
-- `GET /api/v3/reservations/health/ready` - Readiness probe
+#### Authentication
+- `POST /api/v3/auth/register` - Register a new user
+  - Request body: `{ "Username": "string", "Password": "string" }`
+  - Returns: JWT token and user info
+  - Requirements: Username ≥ 3 characters, Password ≥ 6 characters
+- `POST /api/v3/auth/login` - Login with existing credentials
+  - Request body: `{ "Username": "string", "Password": "string" }`
+  - Returns: JWT token and user info
 
-#### Reservations
+#### Health & Status
+- `GET /api/v3/reservations/status` - API version and authors (no auth required)
+- `GET /api/v3/reservations/health` - Overall health status (no auth required)
+- `GET /api/v3/reservations/health/live` - Liveness probe (no auth required)
+- `GET /api/v3/reservations/health/ready` - Readiness probe (no auth required)
+
+#### Reservations (Authentication Required)
+All reservation endpoints require a valid JWT token in the Authorization header:
+`Authorization: Bearer <your_jwt_token>`
+
 - `GET /api/v3/reservations/reservations` - List all reservations
   - Query params: `include_deleted`, `room_id`, `before`, `after`
 - `GET /api/v3/reservations/reservations/{id}` - Get reservation by ID
@@ -95,23 +109,67 @@ docker run -p 8080:8080 -e ConnectionStrings__ReservationsDb="Host=your-db-host;
 
 Access interactive API documentation at `/swagger` when running in Development mode.
 
+### Authentication Flow
+
+The API uses JWT (JSON Web Token) for authentication. Here's how to use it:
+
+1. **Register a new user:**
+   ```bash
+   curl -X POST http://localhost:5087/api/v3/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{"Username": "testuser", "Password": "password123"}'
+   ```
+   
+   Response:
+   ```json
+   {
+     "Token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "Username": "testuser",
+     "ExpiresAt": "2026-01-08T13:00:00Z"
+   }
+   ```
+
+2. **Login with existing credentials:**
+   ```bash
+   curl -X POST http://localhost:5087/api/v3/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"Username": "testuser", "Password": "password123"}'
+   ```
+
+3. **Use the token to access protected endpoints:**
+   ```bash
+   curl -X GET http://localhost:5087/api/v3/reservations/reservations \
+     -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   ```
+
+**Token Details:**
+- Tokens are valid for 24 hours
+- Tokens must be included in the `Authorization` header as `Bearer <token>`
+- All reservation endpoints require authentication
+- Health check and status endpoints do not require authentication
+
 ## Project Structure
 
 ```
 Biletado/
 ├── Controllers/          # API endpoints
 │   ├── ReservationsController.cs
+│   ├── AuthController.cs
 │   └── StatusController.cs
 ├── Services/            # Business logic layer
 │   ├── IReservationService.cs
+│   ├── IAuthService.cs
+│   ├── AuthService.cs
 │   └── ReservationStatusService.cs
 ├── Repository/          # Data access layer
 │   └── ReservationServiceRepository.cs
 ├── Contexts/            # Entity Framework DbContext
 │   └── ReservationsDbContext.cs
 ├── Domain/              # Domain models
-│   └── Reservation.cs
+│   ├── Reservation.cs
+│   └── User.cs
 ├── DTOs/                # Data transfer objects
+├── Migrations/          # EF Core migrations
 ├── Program.cs           # Application entry point
 ├── appsettings.json     # Configuration
 └── Dockerfile           # Container definition
@@ -145,6 +203,19 @@ Key configuration sections in `appsettings.json`:
   }
 }
 ```
+
+**JWT Authentication:**
+```json
+{
+  "Jwt": {
+    "Key": "YourSecretKeyMustBeAtLeast32CharactersLong!",
+    "Issuer": "BiletadoAPI",
+    "Audience": "BiletadoUsers"
+  }
+}
+```
+
+**Important:** Change the JWT key in production to a secure random string of at least 32 characters.
 
 **Logging Configuration:** See [Logging](#logging) section below.
 
@@ -345,10 +416,19 @@ This will create log files in the `logs/` directory with daily rotation (e.g., `
 
 ### Privacy & Security
 
+- **Password Security**: User passwords are hashed using BCrypt before storage
+- **JWT Tokens**: Secure token-based authentication with 24-hour expiration
+- **Protected Endpoints**: All reservation endpoints require valid authentication
 - No sensitive data (passwords, tokens) is logged
 - Exception stack traces are logged for debugging
 - Personal data (if any) follows GDPR guidelines
 - Connection strings are not logged
+
+**Security Best Practices:**
+- Always change the JWT secret key in production
+- Use HTTPS in production environments
+- Regularly rotate JWT keys
+- Monitor failed authentication attempts
 
 ## Contributing
 
