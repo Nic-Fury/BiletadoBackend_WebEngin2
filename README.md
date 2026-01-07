@@ -53,9 +53,17 @@ Biletado is a reservation management system built with ASP.NET Core 8.0 that pro
    }
    ```
 
-3. **Run database migrations:**
+3. **Run database migrations (WICHTIG!):**
+   
+   Before starting the application, you **MUST** apply the database migrations to create the `users` table:
+   
    ```bash
    dotnet ef database update
+   ```
+   
+   If `dotnet-ef` is not installed:
+   ```bash
+   dotnet tool install --global dotnet-ef --version 8.0.0
    ```
 
 4. **Start the application:**

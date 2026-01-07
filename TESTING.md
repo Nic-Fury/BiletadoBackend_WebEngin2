@@ -9,11 +9,31 @@ Die JWT-Authentifizierung wurde gemäß der Aufgabenstellung implementiert:
 
 ## Schnellstart - Lokales Testing
 
+### ⚠️ WICHTIG: Datenbank-Migration zuerst ausführen!
+
+Bevor Sie die Anwendung starten, **MUSS** die Datenbank-Migration ausgeführt werden, um die `users` Tabelle anzulegen:
+
+```bash
+cd Biletado
+dotnet ef database update
+```
+
+**Falls dotnet-ef nicht installiert ist:**
+```bash
+dotnet tool install --global dotnet-ef --version 8.0.0
+```
+
+**Erwartete Ausgabe:**
+```
+Build started...
+Build succeeded.
+Done.
+```
+
 ### 1. Anwendung starten
 
 ```bash
 cd Biletado
-dotnet ef database update  # Datenbank-Migration ausführen
 dotnet run
 ```
 
@@ -193,6 +213,30 @@ Wie in der Aufgabenstellung erwähnt, können Tests mit dem IntelliJ HTTP Client
 Siehe: `gitlab.com/biletado/apidocs` für vollständige API-Dokumentation und Testfälle.
 
 ## Fehlersuche
+
+### Problem: "relation "public.users" does not exist"
+
+**Ursache:** Die Datenbank-Migration wurde nicht ausgeführt.
+
+**Lösung:** 
+```bash
+cd Biletado
+dotnet ef database update
+```
+
+Falls dotnet-ef nicht installiert ist:
+```bash
+dotnet tool install --global dotnet-ef --version 8.0.0
+# Dann erneut Migration ausführen:
+dotnet ef database update
+```
+
+Um zu überprüfen, ob die Migration erfolgreich war:
+```bash
+# PostgreSQL
+psql -h localhost -U postgres -d reservations_v3 -c "\dt"
+# Sie sollten die Tabellen "reservations" und "users" sehen
+```
 
 ### Problem: "JWT Key is not configured"
 
