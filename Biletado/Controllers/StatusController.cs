@@ -6,49 +6,75 @@ namespace Biletado.Controllers;
 
 [ApiController]
 [Route("api/v3/reservations")]
-public class StatusController : Controller
+public class StatusController(IReservationStatusService reservationStatusService, ILogger<StatusController> logger) : ControllerBase
 {
-    private readonly ReservationStatusService _reservationStatusService;
-
-    public StatusController(ReservationStatusService reservationStatusService)
-    {
-        _reservationStatusService = reservationStatusService;
-    }
-
     [HttpGet("status")]
-    public async Task<IActionResult> GetAll()
+    public IActionResult GetStatus()
     {
-        var result = new
+        logger.LogInformation("Status endpoint called");
+        return Ok(new
         {
             authors = new[] { "Nic Nouisser & Jakob Kaufmann" },
             api_version = "3.0.0"
-        };
-        return Ok(result);
+        });
     }
-    
+
     [HttpGet("health")]
-    public async Task<IActionResult> GetHealth()
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> GetHealth(CancellationToken ct = default)
     {
-        return Ok();
+        logger.LogInformation("Health check started");
+        
+        var assetsConnected = await reservationStatusService.IsAssetsServiceReadyAsync(ct);
+        var reservationsConnected = await reservationStatusService.IsReservationsDatabaseConnectedAsync(ct);
+
+        var isReady = assetsConnected && reservationsConnected;
+
+        logger.LogInformation("Health check completed: Ready={IsReady}, AssetsConnected={AssetsConnected}, ReservationsDbConnected={ReservationsDbConnected}",
+            isReady, assetsConnected, reservationsConnected);
+
+        var response = new
+        {
+            live = true,
+            ready = isReady,
+            databases = new
+            {
+                assets = new { connected = assetsConnected }
+            }
+        };
+
+        if (!isReady)
+        {
+            logger.LogWarning("Service not ready - returning 503");
+            return StatusCode(503, response);
+        }
+
+        return Ok(response);
     }
-    
+
     [HttpGet("health/live")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult GetLive()
     {
+        logger.LogDebug("Liveness probe called");
         return Ok(new { live = true });
     }
 
-    
     [HttpGet("health/ready")]
-    public async Task<IActionResult> GetReady()
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> GetReady(CancellationToken ct = default)
     {
-        var traceId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
-        var assetsConnected = await _reservationStatusService.IsAssetsServiceReadyAsync();
-        var reservationsConnected = await _reservationStatusService.IsReservationsDatabaseConnectedAsync();
+        var traceId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        logger.LogInformation("Readiness probe started: TraceId={TraceId}", traceId);
         
+        var assetsConnected = await reservationStatusService.IsAssetsServiceReadyAsync(ct);
+        var reservationsConnected = await reservationStatusService.IsReservationsDatabaseConnectedAsync(ct);
+
         if (!assetsConnected)
         {
+            logger.LogError("Assets service is not reachable: TraceId={TraceId}", traceId);
             return StatusCode(503, new
             {
                 errors = new[]
@@ -63,9 +89,10 @@ public class StatusController : Controller
                 trace = traceId
             });
         }
-        
+
         if (!reservationsConnected)
         {
+            logger.LogError("Reservation database is not reachable: TraceId={TraceId}", traceId);
             return StatusCode(503, new
             {
                 errors = new[]
@@ -80,7 +107,8 @@ public class StatusController : Controller
                 trace = traceId
             });
         }
-        
+
+        logger.LogInformation("Readiness probe successful: TraceId={TraceId}", traceId);
         return Ok(new { ready = true });
     }
 }
