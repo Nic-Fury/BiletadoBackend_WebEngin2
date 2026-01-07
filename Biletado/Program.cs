@@ -64,6 +64,12 @@ public class Program
                 throw new InvalidOperationException("JWT Key is not configured. Please set 'Jwt:Key' in appsettings.json");
             }
 
+            // Validate JWT key length (HMAC-SHA256 requires at least 256 bits / 32 bytes)
+            if (Encoding.UTF8.GetBytes(jwtKey).Length < 32)
+            {
+                throw new InvalidOperationException("JWT Key must be at least 32 characters long for security. Current length: " + Encoding.UTF8.GetBytes(jwtKey).Length);
+            }
+
             var jwtIssuer = builder.Configuration["Jwt:Issuer"];
             if (string.IsNullOrWhiteSpace(jwtIssuer))
             {
