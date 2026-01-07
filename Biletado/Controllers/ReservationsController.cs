@@ -1,12 +1,14 @@
 using System.Diagnostics;
 using Biletado.DTOs;
 using Biletado.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Biletado.Controllers;
 
 [ApiController]
 [Route("api/v3/reservations/reservations")]
+[Authorize]
 public class ReservationsController(IReservationService reservationService, ILogger<ReservationsController> logger) : ControllerBase
 {
     [HttpGet]

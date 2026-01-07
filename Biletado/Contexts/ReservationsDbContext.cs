@@ -13,6 +13,7 @@ public class ReservationsDbContext : DbContext
     }
     
     public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<User> Users => Set<User>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +31,17 @@ public class ReservationsDbContext : DbContext
             r.HasQueryFilter(x => x.DeletedAt == null); // soft-delete filter
             r.HasIndex(x => new { x.RoomId, x.From, x.To })
                 .HasDatabaseName("ix_reservations_room_id_start_time_end_time");
+        });
+
+        modelBuilder.Entity<User>(u =>
+        {
+            u.ToTable("users");
+            u.HasKey(x => x.Id);
+            u.Property(x => x.Id).HasColumnName("id");
+            u.Property(x => x.Username).HasColumnName("username").IsRequired().HasMaxLength(100);
+            u.Property(x => x.PasswordHash).HasColumnName("password_hash").IsRequired();
+            u.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+            u.HasIndex(x => x.Username).IsUnique().HasDatabaseName("ix_users_username");
         });
     }
     

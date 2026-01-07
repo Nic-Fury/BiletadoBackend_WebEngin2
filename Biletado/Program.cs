@@ -6,6 +6,9 @@ using Biletado.DTOs;
 using Biletado.Controllers;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Serilog;
 using Serilog.Events;
 
@@ -52,6 +55,33 @@ public class Program
             builder.Services.AddScoped<IReservationStatusService, ReservationStatusService>();
             builder.Services.AddScoped<IReservationService, ReservationStatusService>();
             builder.Services.AddScoped<ReservationStatusService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            
+            // Configure JWT Authentication
+            var jwtKey = builder.Configuration["Jwt:Key"] ?? "BiletadoDefaultSecretKeyForDevelopmentOnly123!";
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "BiletadoAPI";
+            var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "BiletadoUsers";
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtIssuer,
+                    ValidAudience = jwtAudience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                };
+            });
+
+            builder.Services.AddAuthorization();
             
             // Configure Swagger/OpenAPI
             builder.Services.AddEndpointsApiExplorer();
@@ -80,6 +110,7 @@ public class Program
                 app.UseSwaggerUI();
             }
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();
