@@ -68,6 +68,8 @@ Desktop.ini
 coverage*.xml
 coverage/
 TestResults/
+*.trx
+*.coveragexml
 
 # Docker
 docker-compose.override.yml

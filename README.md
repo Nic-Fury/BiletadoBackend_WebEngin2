@@ -15,6 +15,7 @@ Biletado is a reservation management system built with ASP.NET Core 8.0 that pro
 - **Health Checks**: Comprehensive health and readiness endpoints for Kubernetes
 - **Structured Logging**: JSON-formatted logs with Serilog for observability
 - **API Versioning**: RESTful API endpoints under `/api/v3/reservations`
+- **Test Automation**: Comprehensive unit tests with automated CI/CD testing
 
 ## Technology Stack
 
@@ -23,6 +24,7 @@ Biletado is a reservation management system built with ASP.NET Core 8.0 that pro
 - **Logging**: Serilog with structured JSON output
 - **API Documentation**: Swagger/OpenAPI
 - **Containerization**: Docker support
+- **Testing**: xUnit, FluentAssertions, Moq, and Microsoft.AspNetCore.Mvc.Testing
 
 ## Prerequisites
 
@@ -158,9 +160,32 @@ dotnet build
 
 ### Running Tests
 
+The project includes comprehensive unit and integration tests using xUnit, FluentAssertions, and Moq.
+
+**Run all tests:**
 ```bash
 dotnet test
 ```
+
+**Run tests with detailed output:**
+```bash
+dotnet test --verbosity detailed
+```
+
+**Run tests with code coverage:**
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+**Test Structure:**
+- `Biletado.Tests/Controllers/` - Unit tests for API controllers
+- `Biletado.Tests/Domain/` - Unit tests for domain models
+- `Biletado.Tests/Integration/` - Integration tests for API endpoints
+
+**Automated Testing:**
+Tests are automatically run on every push and pull request via GitHub Actions. Test results and code coverage reports are available as workflow artifacts.
+
+For more details on test integration, external test repositories, and CI/CD setup, see [TEST_INTEGRATION.md](TEST_INTEGRATION.md).
 
 ### Database Migrations
 
