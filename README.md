@@ -158,9 +158,30 @@ dotnet build
 
 ### Running Tests
 
+The project includes comprehensive unit and integration tests using xUnit, FluentAssertions, and Moq.
+
+**Run all tests:**
 ```bash
 dotnet test
 ```
+
+**Run tests with detailed output:**
+```bash
+dotnet test --verbosity detailed
+```
+
+**Run tests with code coverage:**
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+**Test Structure:**
+- `Biletado.Tests/Controllers/` - Unit tests for API controllers
+- `Biletado.Tests/Domain/` - Unit tests for domain models
+- `Biletado.Tests/Integration/` - Integration tests for API endpoints
+
+**Automated Testing:**
+Tests are automatically run on every push and pull request via GitHub Actions. Test results and code coverage reports are available as workflow artifacts.
 
 ### Database Migrations
 
