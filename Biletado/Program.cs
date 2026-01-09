@@ -51,11 +51,28 @@ public class Program
 
             // Configure JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("Jwt");
+            var authority = jwtSettings["Authority"];
+            var audience = jwtSettings["Audience"];
+
+            if (string.IsNullOrEmpty(authority))
+            {
+                Log.Fatal("JWT Authority configuration is missing or empty");
+                throw new InvalidOperationException("JWT Authority must be configured in appsettings.json");
+            }
+
+            if (string.IsNullOrEmpty(audience))
+            {
+                Log.Fatal("JWT Audience configuration is missing or empty");
+                throw new InvalidOperationException("JWT Audience must be configured in appsettings.json");
+            }
+
+            Log.Information("Configuring JWT authentication: Authority={Authority}, Audience={Audience}", authority, audience);
+
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
-                    options.Authority = jwtSettings["Authority"];
-                    options.Audience = jwtSettings["Audience"];
+                    options.Authority = authority;
+                    options.Audience = audience;
                     options.RequireHttpsMetadata = jwtSettings.GetValue<bool>("RequireHttpsMetadata");
                     
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -64,7 +81,7 @@ public class Program
                         ValidateAudience = jwtSettings.GetValue<bool>("ValidateAudience"),
                         ValidateLifetime = jwtSettings.GetValue<bool>("ValidateLifetime"),
                         ValidateIssuerSigningKey = jwtSettings.GetValue<bool>("ValidateIssuerSigningKey"),
-                        ClockSkew = TimeSpan.Zero
+                        ClockSkew = TimeSpan.FromMinutes(1)
                     };
 
                     options.Events = new JwtBearerEvents

@@ -215,8 +215,8 @@ curl -X POST http://localhost:5087/api/v3/reservations/reservations \
   -H "Content-Type: application/json" \
   -d '{
     "room_id": "123e4567-e89b-12d3-a456-426614174000",
-    "from": "2026-01-15",
-    "to": "2026-01-20"
+    "from": "2026-02-15",
+    "to": "2026-02-20"
   }'
 ```
 
