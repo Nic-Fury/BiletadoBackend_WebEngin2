@@ -11,7 +11,7 @@ using Serilog.Events;
 
 namespace Biletado;
 
-public class Program
+public partial class Program
 {
     public static void Main(string[] args)
     {
@@ -99,3 +99,6 @@ public class Program
         }
     }
 }
+
+// Make the Program class accessible to WebApplicationFactory for integration tests
+public partial class Program { }
