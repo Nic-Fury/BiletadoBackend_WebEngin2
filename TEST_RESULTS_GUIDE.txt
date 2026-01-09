@@ -1,0 +1,49 @@
+==========================================
+TESTERGEBNISSE ANZEIGEN - SCHRITT FÜR SCHRITT
+==========================================
+
+📍 OPTION 1: GitHub Actions (Online)
+--------------------------------------------
+1. Gehen Sie zu: https://github.com/Nic-Fury/BiletadoBackend_WebEngin2
+2. Klicken Sie oben auf "Actions" Tab
+3. Links sehen Sie "Test Automation" - klicken Sie darauf
+4. Wählen Sie einen Workflow-Lauf aus der Liste
+5. Scrollen Sie runter zu "Artifacts" Sektion
+   - Klicken Sie "test-results" zum Download
+   - Klicken Sie "code-coverage" zum Download
+6. ODER: Klicken Sie auf "Run Tests" im Job-Details
+   - Sehen Sie die Live-Konsolen-Ausgabe
+
+📍 OPTION 2: Im Pull Request
+--------------------------------------------
+1. Öffnen Sie Ihren Pull Request
+2. Scrollen Sie zu "Checks" am Ende
+3. Klicken Sie auf "Test Automation" → "Details"
+4. Sie sehen die Test-Ergebnisse direkt
+
+📍 OPTION 3: Lokal ausführen
+--------------------------------------------
+Terminal öffnen und eingeben:
+
+dotnet test
+
+Ausgabe zeigt:
+✅ Total tests: 24
+✅ Passed: 24
+✅ Failed: 0
+
+Für Details:
+dotnet test --verbosity detailed
+
+==========================================
+AKTUELLE TESTS: 24 Tests (alle bestanden ✅)
+==========================================
+
+Unit Tests: 15
+- StatusController: 9 Tests
+- Reservation Model: 6 Tests
+
+Integration Tests: 9
+- API Endpoints: 9 Tests
+
+==========================================
