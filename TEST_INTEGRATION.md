@@ -250,10 +250,10 @@ Examples:
 
 Potential improvements to the test suite:
 
-1. **Integration Tests**: Full API endpoint testing with test database
+1. **Extended Integration Tests**: Additional API endpoint testing with test database (Reservations CRUD operations)
 2. **Performance Tests**: Load testing and benchmarking
-3. **Security Tests**: Authentication/authorization validation
-4. **Contract Tests**: API specification compliance
-5. **External Test Integration**: Automated execution of apidocs tests in CI/CD
+3. **Security Tests**: Authentication/authorization validation with JWT
+4. **Contract Tests**: API specification compliance with OpenAPI schema
+5. **External Test Integration**: Automated execution of biletado/apidocs tests in CI/CD
 6. **Mutation Testing**: Verify test suite effectiveness
 7. **Snapshot Testing**: Validate API response structures

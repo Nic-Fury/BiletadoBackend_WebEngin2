@@ -57,7 +57,7 @@ public class StatusControllerTests
     }
 
     [Fact]
-    public async Task GetLive_ShouldReturnOkWithLiveTrue()
+    public void GetLive_ShouldReturnOkWithLiveTrue()
     {
         // Act
         var result = _controller.GetLive();
