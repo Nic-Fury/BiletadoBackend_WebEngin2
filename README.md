@@ -183,7 +183,7 @@ dotnet test --collect:"XPlat Code Coverage"
 - `Biletado.Tests/Integration/` - Integration tests for API endpoints
 
 **Automated Testing:**
-Tests are automatically run on every push and pull request via GitHub Actions. Test results and code coverage reports are available as workflow artifacts.
+Tests are automatically run on every push and pull request via GitHub Actions. **Test results and code coverage reports are available as workflow artifacts.**
 
 For more details on test integration, external test repositories, and CI/CD setup, see [TEST_INTEGRATION.md](TEST_INTEGRATION.md).
 
