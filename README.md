@@ -71,7 +71,11 @@ Build and run with Docker:
 
 ```bash
 docker build -t biletado-api .
-docker run -p 8080:8080 -e ConnectionStrings__ReservationsDb="Host=your-db-host;..." biletado-api
+docker run -p 8080:8080 \
+  -e ConnectionStrings__ReservationsDb="Host=your-db-host;..." \
+  -e Jwt__Authority="http://your-iam-host:8080/realms/biletado" \
+  -e Jwt__Audience="biletado-reservations" \
+  biletado-api
 ```
 
 ## API Documentation
