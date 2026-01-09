@@ -50,12 +50,20 @@ xdg-open ./TestResults/CoverageReport/index.html
 
 ### Current Test Coverage
 
-- **15 tests** covering:
-  - Status endpoint (GET /api/v3/reservations/status)
-  - Health check endpoint (GET /api/v3/reservations/health)
-  - Liveness probe (GET /api/v3/reservations/health/live)
-  - Readiness probe (GET /api/v3/reservations/health/ready)
-  - Reservation domain model properties and soft delete
+- **24 tests total** covering:
+  - **Unit Tests (15)**:
+    - Status endpoint (GET /api/v3/reservations/status)
+    - Health check endpoint (GET /api/v3/reservations/health)
+    - Liveness probe (GET /api/v3/reservations/health/live)
+    - Readiness probe (GET /api/v3/reservations/health/ready)
+    - Reservation domain model properties and soft delete
+  - **Integration Tests (9)**:
+    - Full HTTP request/response cycle
+    - JSON content type validation
+    - API version validation
+    - Multiple concurrent requests
+    - CORS support testing
+    - 404 for invalid endpoints
 
 ## External Test Repository Integration
 
@@ -224,9 +232,9 @@ Examples:
 ## Requirements Fulfillment
 
 ✅ **testautomation (5% grade requirement):**
-- Single self-created test requirement: **Exceeded** with 15 comprehensive tests
-- Unit tests for controllers and domain models
-- Integration test infrastructure ready
+- Single self-created test requirement: **Exceeded** with 24 comprehensive tests
+- Unit tests (15) for controllers and domain models
+- Integration tests (9) for full HTTP cycle
 - Automated execution via GitHub Actions
 - Test run documented in workflow artifacts
 
