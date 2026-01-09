@@ -9,6 +9,7 @@ Biletado is a reservation management system built with ASP.NET Core 8.0 that pro
 ## Features
 
 - **CRUD Operations**: Create, read, update, and delete room reservations
+- **JWT Authentication**: Secure write operations (POST, PUT, DELETE) with JWT token validation
 - **Soft Delete**: Reservations can be soft-deleted or permanently removed
 - **Room Validation**: Integration with external Assets service to validate room existence
 - **Conflict Detection**: Automatic detection of overlapping reservations
@@ -19,6 +20,7 @@ Biletado is a reservation management system built with ASP.NET Core 8.0 that pro
 ## Technology Stack
 
 - **Framework**: ASP.NET Core 8.0
+- **Authentication**: JWT Bearer tokens with Microsoft.AspNetCore.Authentication.JwtBearer
 - **Database**: PostgreSQL with Entity Framework Core 8.0
 - **Logging**: Serilog with structured JSON output
 - **API Documentation**: Swagger/OpenAPI
@@ -83,12 +85,12 @@ docker run -p 8080:8080 -e ConnectionStrings__ReservationsDb="Host=your-db-host;
 - `GET /api/v3/reservations/health/ready` - Readiness probe
 
 #### Reservations
-- `GET /api/v3/reservations/reservations` - List all reservations
+- `GET /api/v3/reservations/reservations` - List all reservations (no authentication required)
   - Query params: `include_deleted`, `room_id`, `before`, `after`
-- `GET /api/v3/reservations/reservations/{id}` - Get reservation by ID
-- `POST /api/v3/reservations/reservations` - Create new reservation
-- `PUT /api/v3/reservations/reservations/{id}` - Update or create reservation
-- `DELETE /api/v3/reservations/reservations/{id}` - Delete reservation
+- `GET /api/v3/reservations/reservations/{id}` - Get reservation by ID (no authentication required)
+- `POST /api/v3/reservations/reservations` - Create new reservation (**requires JWT authentication**)
+- `PUT /api/v3/reservations/reservations/{id}` - Update or create reservation (**requires JWT authentication**)
+- `DELETE /api/v3/reservations/reservations/{id}` - Delete reservation (**requires JWT authentication**)
   - Query param: `permanent` (soft-delete by default)
 
 ### Swagger UI
@@ -146,7 +148,96 @@ Key configuration sections in `appsettings.json`:
 }
 ```
 
+**JWT Authentication:**
+```json
+{
+  "Jwt": {
+    "Authority": "http://localhost:8080/realms/biletado",
+    "Audience": "biletado-reservations",
+    "RequireHttpsMetadata": false,
+    "ValidateIssuer": true,
+    "ValidateAudience": true,
+    "ValidateLifetime": true,
+    "ValidateIssuerSigningKey": true
+  }
+}
+```
+
+The JWT authentication settings can be configured per environment:
+- **Development**: Uses `localhost:8080` as the IAM authority
+- **Production**: Uses `iam:8080` as the IAM authority (configured in `appsettings.Production.json`)
+
+Configuration parameters:
+- `Authority`: The OpenID Connect authority URL (e.g., Keycloak realm URL)
+- `Audience`: The expected audience claim in the JWT token
+- `RequireHttpsMetadata`: Whether HTTPS is required for metadata endpoint (set to `false` for local development)
+- `ValidateIssuer`: Enable issuer validation
+- `ValidateAudience`: Enable audience validation
+- `ValidateLifetime`: Enable token expiration validation
+- `ValidateIssuerSigningKey`: Enable signature validation
+
 **Logging Configuration:** See [Logging](#logging) section below.
+
+## Authentication
+
+This API uses **JWT (JSON Web Token) Bearer authentication** to secure write operations. The authentication is configured to work with an OpenID Connect-compatible Identity and Access Management (IAM) system, such as Keycloak.
+
+### Protected Endpoints
+
+The following endpoints require a valid JWT token in the `Authorization` header:
+- `POST /api/v3/reservations/reservations` - Create reservation
+- `PUT /api/v3/reservations/reservations/{id}` - Update reservation
+- `DELETE /api/v3/reservations/reservations/{id}` - Delete reservation
+
+### Public Endpoints
+
+These endpoints do NOT require authentication:
+- All GET endpoints (read operations)
+- All health and status endpoints
+
+### JWT Token Requirements
+
+The JWT token must:
+1. Be issued by the configured authority (IAM service)
+2. Have a valid signature
+3. Not be expired
+4. Contain the correct audience claim (`biletado-reservations`)
+
+**Note**: Scopes/permissions are NOT validated - only token validity and signature are checked.
+
+### Using JWT Tokens
+
+Include the JWT token in the `Authorization` header using the Bearer scheme:
+
+```bash
+curl -X POST http://localhost:5087/api/v3/reservations/reservations \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "room_id": "123e4567-e89b-12d3-a456-426614174000",
+    "from": "2026-01-15",
+    "to": "2026-01-20"
+  }'
+```
+
+### Configuration
+
+JWT authentication is configured via environment-specific `appsettings.json` files. The IAM authority URL can be overridden using environment variables:
+
+```bash
+# Using environment variable
+export Jwt__Authority="http://your-iam-server:8080/realms/biletado"
+dotnet run
+```
+
+### Troubleshooting
+
+If authentication fails, check the application logs for JWT validation errors. Common issues:
+- Token expired
+- Invalid signature
+- Wrong audience claim
+- IAM service not reachable
+- Incorrect authority URL
 
 ## Development
 

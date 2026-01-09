@@ -6,6 +6,8 @@ using Biletado.DTOs;
 using Biletado.Controllers;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Events;
 
@@ -47,6 +49,41 @@ public class Program
             builder.Services.AddDbContext<ReservationsDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("ReservationsDb")));
 
+            // Configure JWT Authentication
+            var jwtSettings = builder.Configuration.GetSection("Jwt");
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.Authority = jwtSettings["Authority"];
+                    options.Audience = jwtSettings["Audience"];
+                    options.RequireHttpsMetadata = jwtSettings.GetValue<bool>("RequireHttpsMetadata");
+                    
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = jwtSettings.GetValue<bool>("ValidateIssuer"),
+                        ValidateAudience = jwtSettings.GetValue<bool>("ValidateAudience"),
+                        ValidateLifetime = jwtSettings.GetValue<bool>("ValidateLifetime"),
+                        ValidateIssuerSigningKey = jwtSettings.GetValue<bool>("ValidateIssuerSigningKey"),
+                        ClockSkew = TimeSpan.Zero
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnAuthenticationFailed = context =>
+                        {
+                            Log.Warning("JWT authentication failed: {Error}", context.Exception.Message);
+                            return Task.CompletedTask;
+                        },
+                        OnTokenValidated = context =>
+                        {
+                            Log.Debug("JWT token validated for user: {User}", context.Principal?.Identity?.Name ?? "Unknown");
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
+            builder.Services.AddAuthorization();
+
             // Register Repository and Services
             builder.Services.AddScoped<ReservationServiceRepository>();
             builder.Services.AddScoped<IReservationStatusService, ReservationStatusService>();
@@ -80,6 +117,7 @@ public class Program
                 app.UseSwaggerUI();
             }
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

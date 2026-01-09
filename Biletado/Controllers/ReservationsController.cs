@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Biletado.DTOs;
 using Biletado.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Biletado.Controllers;
@@ -71,6 +72,7 @@ public class ReservationsController(IReservationService reservationService, ILog
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(ReservationResponse), 201)]
     [ProducesResponseType(typeof(ErrorResponse), 400)]
     public async Task<IActionResult> PostReservation([FromBody] CreateReservationRequest request, CancellationToken ct)
@@ -144,6 +146,7 @@ public class ReservationsController(IReservationService reservationService, ILog
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     [ProducesResponseType(typeof(ReservationResponse), 200)]
     [ProducesResponseType(typeof(ReservationResponse), 201)]
     [ProducesResponseType(typeof(ErrorResponse), 400)]
@@ -180,6 +183,7 @@ public class ReservationsController(IReservationService reservationService, ILog
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ErrorResponse), 404)]
     [ProducesResponseType(typeof(ErrorResponse), 400)]
